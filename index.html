@@ -353,7 +353,12 @@
     }
 
     // 每5秒自动同步
-    setInterval(() => { if (!isSyncing) loadFromCloud(); }, 60000);
+    setInterval(async () => {
+  if (!isSyncing) {
+    await loadFromCloud();
+    renderAll();
+  }
+}, 60000);
 
     // 本地存储备份
     function saveLocal() {
