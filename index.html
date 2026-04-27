@@ -3,70 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>企业共享图书馆 · 联网版</title>
+  <title>企业共享图书馆</title>
   <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/turn.js/3/turn.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", "PingFang SC", sans-serif; }
     body { background: #f5f7fa; min-height: 100vh; }
     .hidden { display: none !important; }
-    
-    /* 导航栏 */
+
     .navbar { background: white; box-shadow: 0 2px 12px rgba(0,0,0,0.08); position: sticky; top: 0; z-index: 100; }
     .nav-inner { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
     .logo { font-size: 22px; font-weight: bold; color: #1D2129; }
-    .sync-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .sync-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
     .sync-online { background: #E8FFEA; color: #00B42A; }
     .sync-syncing { background: #FFF7E6; color: #FF7D00; }
     .sync-offline { background: #FFECE8; color: #F53F3F; }
-    
-    /* 主布局 */
+
     .main-layout { max-width: 1200px; margin: 0 auto; padding: 24px 20px; display: flex; gap: 24px; }
     .sidebar { width: 180px; flex-shrink: 0; }
     .sidebar-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 80px; }
-    .sidebar-title { font-weight: 600; color: #1D2129; margin-bottom: 16px; font-size: 16px; }
+    .sidebar-title { font-weight: 600; color: #1D2129; margin-bottom: 16px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
     .cat-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
-    .cat-btn { width: 100%; text-align: left; border: none; background: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; color: #4E5969; }
+    .cat-btn { width: 100%; text-align: left; border: none; background: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #4E5969; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
     .cat-btn:hover { background: #F2F3F5; }
     .cat-btn.active { background: #E8F3FF; color: #165DFF; font-weight: 600; }
-    
-    /* 内容区 */
+    .cat-edit-btn { font-size: 11px; color: #86909C; cursor: pointer; padding: 2px 6px; border-radius: 4px; border: none; background: none; }
+    .cat-edit-btn:hover { background: #E5E6EB; color: #165DFF; }
+
     .content-area { flex: 1; min-width: 0; }
-    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
     .section-title { font-size: 24px; font-weight: 600; color: #1D2129; }
-    
-    /* 书籍网格 */
+
     .books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-    .book-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: all 0.3s ease; cursor: pointer; }
+    .book-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: all 0.3s; cursor: pointer; }
     .book-card:hover { transform: translateY(-6px); box-shadow: 0 12px 24px rgba(0,0,0,0.12); }
-    .book-cover-img { width: 100%; height: 200px; object-fit: cover; border-bottom: 1px solid #F2F3F5; }
+    .book-cover-img { width: 100%; height: 220px; object-fit: cover; border-bottom: 1px solid #F2F3F5; }
     .book-details { padding: 16px; }
     .book-name { font-size: 16px; font-weight: 600; color: #1D2129; margin-bottom: 4px; }
-    .book-meta { color: #4E5969; font-size: 13px; margin-bottom: 6px; }
-    .book-desc { color: #4E5969; font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    
-    /* 按钮 */
-    .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; }
+    .book-meta { color: #4E5969; font-size: 13px; margin-bottom: 4px; }
+    .book-review { color: #4E5969; font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .review-toggle { color: #165DFF; font-size: 12px; cursor: pointer; border: none; background: none; margin-top: 4px; }
+    .review-toggle:hover { text-decoration: underline; }
+
+    .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
     .btn-primary { background: #165DFF; color: white; } .btn-primary:hover { background: #0E42D2; }
     .btn-success { background: #00B42A; color: white; } .btn-success:hover { background: #009E24; }
     .btn-warning { background: #FF7D00; color: white; } .btn-warning:hover { background: #E67000; }
     .btn-danger { background: #F53F3F; color: white; } .btn-danger:hover { background: #D93636; }
     .btn-outline { background: white; border: 2px solid #165DFF; color: #165DFF; } .btn-outline:hover { background: #E8F3FF; }
+    .btn-default { background: #F2F3F5; color: #4E5969; } .btn-default:hover { background: #E5E6EB; }
     .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
-    
-    /* 状态标签 */
+
     .badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
     .badge-pending { background: #FFF7E6; color: #FF7D00; }
     .badge-published { background: #E8FFEA; color: #00B42A; }
     .badge-unpublished { background: #F2F3F5; color: #86909C; }
-    
-    /* 模态框 */
-    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 999; display: flex; align-items: center; justify-content: center; }
-    .modal-box { background: white; border-radius: 16px; padding: 24px; max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 999; display: flex; align-items: center; justify-content: center; }
+    .modal-box { background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto; }
+    .modal-lg { max-width: 900px; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .modal-close { background: none; border: none; font-size: 28px; cursor: pointer; color: #86909C; }
-    
-    /* 翻书效果 */
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; color: #4E5969; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 2px solid #E5E6EB; border-radius: 8px; font-size: 14px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #165DFF; }
+    .form-row { display: flex; gap: 12px; }
+    .form-row .form-group { flex: 1; }
+
     .book-container { width: 800px; height: 500px; margin: 0 auto; }
     .book-page { width: 400px; height: 500px; background: #fff; box-shadow: inset 0 0 20px rgba(0,0,0,0.04); }
     .page-content { padding: 40px; height: 100%; overflow-y: auto; }
@@ -74,34 +79,32 @@
     .page-content p { line-height: 2; margin-bottom: 1em; text-indent: 2em; color: #4E5969; }
     .cover-page { display: table-cell; vertical-align: middle; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 400px; height: 500px; }
     .cover-page img { width: 150px; height: 200px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); object-fit: cover; }
-    
-    /* 搜索框 */
-    .search-box { border: 2px solid #E5E6EB; border-radius: 8px; padding: 8px 14px; width: 200px; font-size: 14px; }
+
+    .search-box { border: 2px solid #E5E6EB; border-radius: 8px; padding: 10px 14px; width: 200px; font-size: 14px; }
     .search-box:focus { outline: none; border-color: #165DFF; }
-    
-    /* 管理表格 */
+
     .admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    .admin-table th { padding: 12px; text-align: left; color: #4E5969; font-weight: 500; background: #F7F8FA; border-bottom: 2px solid #E5E6EB; }
+    .admin-table th { padding: 12px; text-align: left; color: #4E5969; background: #F7F8FA; border-bottom: 2px solid #E5E6EB; }
     .admin-table td { padding: 12px; border-bottom: 1px solid #F2F3F5; }
-    
+
     @media (max-width: 768px) {
       .main-layout { flex-direction: column; }
       .sidebar { width: 100%; }
       .sidebar-card { position: static; }
       .book-container { width: 100%; height: 300px; }
       .book-page { width: 50%; height: 300px; }
+      .form-row { flex-direction: column; }
     }
   </style>
 </head>
 <body>
-  <!-- 导航栏 -->
   <nav class="navbar">
     <div class="nav-inner">
       <div class="logo">📚 企业共享图书馆</div>
       <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
         <span id="syncBadge" class="sync-badge sync-online">🟢 已连接</span>
-        <input id="searchInput" class="search-box" type="text" placeholder="🔍 搜索..." onkeypress="if(event.key==='Enter')doSearch()">
-        <button onclick="shareBook()" class="btn btn-outline">📤 分享书籍</button>
+        <input id="searchInput" class="search-box" type="text" placeholder="🔍 搜索书名、作者..." onkeypress="if(event.key==='Enter')doSearch()">
+        <button onclick="$('#uploadModal').removeClass('hidden')" class="btn btn-outline">📤 分享书籍</button>
         <button onclick="exportData()" class="btn btn-outline">💾 导出</button>
         <button onclick="importData()" class="btn btn-outline">📥 导入</button>
         <button id="adminBtn" class="btn btn-outline">🔑 管理员</button>
@@ -109,7 +112,6 @@
     </div>
   </nav>
 
-  <!-- 主布局 -->
   <div class="main-layout">
     <aside class="sidebar">
       <div class="sidebar-card">
@@ -129,12 +131,17 @@
 
       <div id="adminView" class="hidden">
         <div class="section-header">
-          <h2 class="section-title">📋 书籍管理</h2>
-          <button onclick="syncNow()" class="btn btn-primary">🔄 刷新同步</button>
+          <h2 class="section-title">📋 书籍管理后台</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="openEditBookModal()" class="btn btn-success">➕ 添加书籍</button>
+            <button onclick="openCategoryModal()" class="btn btn-primary">🏷️ 分类管理</button>
+            <button onclick="openPasswordModal()" class="btn btn-default">🔒 修改密码</button>
+            <button onclick="syncNow()" class="btn btn-primary">🔄 立即同步</button>
+          </div>
         </div>
-        <div style="background:white; border-radius:12px; overflow:auto; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <div style="background:white;border-radius:12px;overflow:auto;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
           <table class="admin-table">
-            <thead><tr><th>封面</th><th>书名</th><th>作者</th><th>分类</th><th>状态</th><th>操作</th></tr></thead>
+            <thead><tr><th>封面</th><th>书名</th><th>作者</th><th>分类</th><th>分享者</th><th>批次</th><th>日期</th><th>状态</th><th>操作</th></tr></thead>
             <tbody id="adminTableBody"></tbody>
           </table>
         </div>
@@ -142,30 +149,136 @@
     </main>
   </div>
 
-  <!-- 阅读模态框 -->
-  <div id="readModal" class="modal hidden">
+  <!-- 上传书籍模态框 -->
+  <div id="uploadModal" class="modal-overlay hidden">
     <div class="modal-box">
+      <div class="modal-header">
+        <h3>📤 分享我的书籍</h3>
+        <button class="modal-close" onclick="$('#uploadModal').addClass('hidden')">&times;</button>
+      </div>
+      <form id="uploadForm">
+        <div class="form-row">
+          <div class="form-group"><label>书名 *</label><input type="text" name="bookName" required></div>
+          <div class="form-group"><label>作者 *</label><input type="text" name="bookAuthor" required></div>
+        </div>
+        <div class="form-group"><label>您的名字/部门 *</label><input type="text" name="bookUploader" required placeholder="例如：技术部-张三"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>书籍分类 *</label>
+            <select name="bookCategory" required></select>
+          </div>
+          <div class="form-group"><label>分享批次</label><input type="text" name="bookBatch" placeholder="例如：2024年读书月第一期"></div>
+        </div>
+        <div class="form-group"><label>书籍封面图片 *</label><input type="file" name="bookCover" accept="image/*" required></div>
+        <div class="form-group"><label>读后感/推荐语</label><textarea name="bookReview" rows="3" placeholder="分享一下您读完这本书的感受..."></textarea></div>
+        <div class="form-group"><label>书籍内容（系统会自动分页）</label><textarea name="bookContent" rows="6" placeholder="粘贴书籍内容，系统会自动按段落分页..."></textarea></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;font-size:16px;">✅ 提交分享</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 阅读模态框 -->
+  <div id="readModal" class="modal-overlay hidden">
+    <div class="modal-box modal-lg">
       <div class="modal-header">
         <h3 id="readBookTitle">📖 阅读中...</h3>
         <button class="modal-close" onclick="closeReadModal()">&times;</button>
       </div>
       <div id="bookWrapper"><div id="flipbook" class="book-container"></div></div>
-      <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin-top:16px;">
-        <button onclick="$('#flipbook').turn('previous')" class="btn btn-outline">◀ 上一页</button>
-        <span id="pageIndicator" style="color:#86909C;">1 / 1</span>
-        <button onclick="$('#flipbook').turn('next')" class="btn btn-outline">下一页 ▶</button>
+      <div style="display:flex;justify-content:center;align-items:center;gap:20px;margin-top:16px;">
+        <button onclick="$('#flipbook').turn('previous')" class="btn btn-default">◀ 上一页</button>
+        <span id="pageIndicator" style="color:#86909C;font-weight:500;">1 / 1</span>
+        <button onclick="$('#flipbook').turn('next')" class="btn btn-default">下一页 ▶</button>
       </div>
     </div>
   </div>
 
+  <!-- 编辑书籍模态框 -->
+  <div id="editModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="editModalTitle">编辑书籍</h3>
+        <button class="modal-close" onclick="$('#editModal').addClass('hidden')">&times;</button>
+      </div>
+      <form id="editForm">
+        <input type="hidden" name="bookId">
+        <div class="form-row">
+          <div class="form-group"><label>书名 *</label><input type="text" name="bookName" required></div>
+          <div class="form-group"><label>作者 *</label><input type="text" name="bookAuthor" required></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>分享者</label><input type="text" name="bookUploader"></div>
+          <div class="form-group"><label>分享批次</label><input type="text" name="bookBatch"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>分类</label>
+            <select name="bookCategory" id="editCategorySelect"></select>
+          </div>
+          <div class="form-group">
+            <label>上传日期</label>
+            <input type="date" name="bookDate">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>状态</label>
+            <select name="bookStatus">
+              <option value="0">待审核</option><option value="1">已上架</option><option value="2">已下架</option>
+            </select>
+          </div>
+          <div class="form-group"><label>封面（不修改可留空）</label><input type="file" name="bookCover" accept="image/*"></div>
+        </div>
+        <div class="form-group"><label>读后感</label><textarea name="bookReview" rows="3"></textarea></div>
+        <div class="form-group"><label>书籍内容（不修改可留空）</label><textarea name="bookContent" rows="4" placeholder="修改后会重新分页..."></textarea></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;">💾 保存修改</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 分类管理模态框 -->
+  <div id="categoryModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>🏷️ 分类管理</h3>
+        <button class="modal-close" onclick="$('#categoryModal').addClass('hidden')">&times;</button>
+      </div>
+      <div id="categoryListManage" style="margin-bottom:16px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input id="newCatKey" type="text" placeholder="分类标识(英文)" style="flex:1;padding:10px;border:2px solid #E5E6EB;border-radius:8px;">
+        <input id="newCatName" type="text" placeholder="分类名称" style="flex:2;padding:10px;border:2px solid #E5E6EB;border-radius:8px;">
+        <button onclick="addCategory()" class="btn btn-success">➕ 添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 修改密码模态框 -->
+  <div id="passwordModal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:400px;">
+      <div class="modal-header">
+        <h3>🔒 修改管理员密码</h3>
+        <button class="modal-close" onclick="$('#passwordModal').addClass('hidden')">&times;</button>
+      </div>
+      <form id="passwordForm">
+        <div class="form-group"><label>旧密码</label><input type="password" name="oldPassword" required></div>
+        <div class="form-group"><label>新密码（至少6位）</label><input type="password" name="newPassword" required></div>
+        <div class="form-group"><label>确认新密码</label><input type="password" name="confirmPassword" required></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;">确认修改</button>
+      </form>
+    </div>
+  </div>
+
   <script>
-    // ==================== 配置（已填入您的信息） ====================
-    const JSONBIN_API_KEY = '$2a$10$91/hbGCAIvpff7z7yYL4l.sJTo/c1rRodKQGhFJWnJPXttzpSZvXa';
+    // ==================== 🔴 这里替换成你的新 Access Key ====================
+    const JSONBIN_API_KEY = '$2a$10$dhmfdfW5SUKScxZD16CH/OZ4iiTaBJDYyEjnRZJQVZhb0jn1lsuCG';
     const JSONBIN_BIN_ID = '69eec66a36566621a8f5cfda';
-    
+
     // ==================== 全局状态 ====================
     let books = [];
-    let categoryMap = {};
+    let categoryMap = {
+      all: '所有书籍', tech: '技术类', manage: '管理类', literature: '文学类',
+      psychology: '心理学类', career: '职场类', pending: '待审核'
+    };
     let adminPassword = 'admin123';
     let isAdmin = false;
     let currentCategory = 'all';
@@ -174,63 +287,88 @@
     // ==================== 云端同步 ====================
     function updateSyncBadge(status) {
       const badge = document.getElementById('syncBadge');
-      if (status === 'online') { badge.className = 'sync-badge sync-online'; badge.textContent = '🟢 已连接'; }
-      else if (status === 'syncing') { badge.className = 'sync-badge sync-syncing'; badge.textContent = '🟡 同步中...'; }
-      else { badge.className = 'sync-badge sync-offline'; badge.textContent = '🔴 离线'; }
+      const states = {
+        online: ['sync-online', '🟢 已连接'],
+        syncing: ['sync-syncing', '🟡 同步中...'],
+        offline: ['sync-offline', '🔴 离线 - 使用本地数据']
+      };
+      badge.className = 'sync-badge ' + states[status][0];
+      badge.textContent = states[status][1];
     }
 
     async function loadFromCloud() {
       if (isSyncing) return;
       isSyncing = true;
       updateSyncBadge('syncing');
-      
       try {
         const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
           headers: { 'X-Master-Key': JSONBIN_API_KEY }
         });
-        
         if (res.ok) {
           const data = await res.json();
-          const record = data.record;
-          books = record.books || [];
-          categoryMap = record.categoryMap || {};
-          adminPassword = record.adminPassword || 'admin123';
+          const r = data.record;
+          books = r.books || [];
+          categoryMap = r.categoryMap || categoryMap;
+          adminPassword = r.adminPassword || 'admin123';
           updateSyncBadge('online');
+          saveLocal();
+        } else {
+          throw new Error('加载失败: ' + res.status);
         }
       } catch (e) {
-        console.error('同步失败:', e);
+        console.error(e);
+        loadLocal();
         updateSyncBadge('offline');
-      } finally {
-        isSyncing = false;
-        renderAll();
       }
+      isSyncing = false;
+      renderAll();
     }
 
     async function saveToCloud() {
       if (isSyncing) return;
       isSyncing = true;
       updateSyncBadge('syncing');
-      
       try {
         await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': JSONBIN_API_KEY
-          },
+          headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
           body: JSON.stringify({ books, categoryMap, adminPassword })
         });
         updateSyncBadge('online');
+        saveLocal();
       } catch (e) {
-        console.error('保存失败:', e);
+        console.error(e);
         updateSyncBadge('offline');
-      } finally {
-        isSyncing = false;
+        saveLocal();
       }
+      isSyncing = false;
     }
 
-    function syncNow() { loadFromCloud().then(() => alert('同步完成！')); }
-    setInterval(() => loadFromCloud(), 10000); // 每10秒自动同步
+    function syncNow() {
+      updateSyncBadge('syncing');
+      loadFromCloud().then(() => {
+        updateSyncBadge('online');
+        renderAll();
+      });
+    }
+
+    // 每5秒自动同步
+    setInterval(() => { if (!isSyncing) loadFromCloud(); }, 5000);
+
+    // 本地存储备份
+    function saveLocal() {
+      localStorage.setItem('lib_books', JSON.stringify(books));
+      localStorage.setItem('lib_categories', JSON.stringify(categoryMap));
+      localStorage.setItem('lib_adminPwd', adminPassword);
+    }
+    function loadLocal() {
+      const b = localStorage.getItem('lib_books');
+      const c = localStorage.getItem('lib_categories');
+      const p = localStorage.getItem('lib_adminPwd');
+      if (b) books = JSON.parse(b);
+      if (c) categoryMap = JSON.parse(c);
+      if (p) adminPassword = p;
+    }
 
     // ==================== 导出/导入 ====================
     function exportData() {
@@ -244,20 +382,16 @@
 
     function importData() {
       const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json';
+      input.type = 'file'; input.accept = '.json';
       input.onchange = (e) => {
         const reader = new FileReader();
         reader.onload = (ev) => {
           try {
             const data = JSON.parse(ev.target.result);
             if (confirm('导入将覆盖当前数据，确定继续？')) {
-              books = data.books || [];
-              categoryMap = data.categoryMap || {};
+              books = data.books || []; categoryMap = data.categoryMap || categoryMap;
               adminPassword = data.adminPassword || 'admin123';
-              saveToCloud();
-              renderAll();
-              alert('导入成功！');
+              saveToCloud(); renderAll(); alert('✅ 导入成功！');
             }
           } catch (err) { alert('文件格式错误'); }
         };
@@ -271,10 +405,19 @@
       renderCategoryNav();
       renderBooks();
       if (isAdmin) renderAdminTable();
-      
       document.getElementById('userView').classList.toggle('hidden', isAdmin);
       document.getElementById('adminView').classList.toggle('hidden', !isAdmin);
-      document.getElementById('adminBtn').textContent = isAdmin ? '退出管理' : '🔑 管理员';
+      document.getElementById('adminBtn').textContent = isAdmin ? '👋 退出管理' : '🔑 管理员';
+      // 更新上传表单的分类下拉
+      const sel = document.querySelector('#uploadForm select[name="bookCategory"]');
+      if (sel) {
+        sel.innerHTML = '';
+        for (let k in categoryMap) {
+          if (k !== 'all' && k !== 'pending') {
+            sel.innerHTML += `<option value="${k}">${categoryMap[k]}</option>`;
+          }
+        }
+      }
     }
 
     function renderCategoryNav() {
@@ -288,12 +431,17 @@
         { key: 'career', label: '💼 职场类' }
       ];
       if (isAdmin) cats.push({ key: 'pending', label: '⏳ 待审核' });
-      
-      nav.innerHTML = cats.map(c => 
-        `<li><button class="cat-btn ${currentCategory === c.key ? 'active' : ''}" 
-          data-cat="${c.key}">${c.label}</button></li>`
-      ).join('');
-      
+      for (let k in categoryMap) {
+        if (!cats.find(c => c.key === k) && k !== 'all' && k !== 'pending') {
+          cats.push({ key: k, label: categoryMap[k] });
+        }
+      }
+      nav.innerHTML = cats.map(c => `
+        <li><button class="cat-btn ${currentCategory === c.key ? 'active' : ''}" data-cat="${c.key}">
+          <span>${c.label}</span>
+          ${isAdmin && c.key !== 'all' && c.key !== 'pending' ? `<span class="cat-edit-btn" onclick="event.stopPropagation();editCategoryInline('${c.key}')">✏️</span>` : ''}
+        </button></li>
+      `).join('');
       nav.querySelectorAll('.cat-btn').forEach(btn => {
         btn.onclick = () => {
           nav.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -305,166 +453,301 @@
     }
 
     function renderBooks() {
-      document.getElementById('listTitle').textContent = 
-        currentCategory === 'all' ? '所有书籍' : 
-        currentCategory === 'pending' ? '待审核书籍' : 
-        categoryMap[currentCategory] || currentCategory;
-      
+      document.getElementById('listTitle').textContent = currentCategory === 'pending' ? '待审核书籍' : (categoryMap[currentCategory] || '所有书籍');
       let filtered = [...books];
-      if (currentCategory === 'pending') filtered = books.filter(b => b.status === 0);
-      else if (currentCategory !== 'all') filtered = books.filter(b => b.category === currentCategory);
+      if (currentCategory === 'pending') filtered = filtered.filter(b => b.status === 0);
+      else if (currentCategory !== 'all') filtered = filtered.filter(b => b.category === currentCategory);
       if (!isAdmin) filtered = filtered.filter(b => b.status === 1);
-      
       const search = document.getElementById('searchInput').value.toLowerCase();
-      if (search) filtered = filtered.filter(b => 
-        (b.name || '').toLowerCase().includes(search) || 
-        (b.author || '').toLowerCase().includes(search)
-      );
-      
+      if (search) filtered = filtered.filter(b => (b.name||'').toLowerCase().includes(search) || (b.author||'').toLowerCase().includes(search) || (b.uploader||'').includes(search));
       document.getElementById('bookCount').textContent = `共 ${filtered.length} 本`;
-      
       const grid = document.getElementById('booksGrid');
       if (filtered.length === 0) {
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#86909C;">📭 暂无书籍</div>';
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#86909C;"><div style="font-size:48px;">📭</div><p>暂无书籍</p></div>';
         return;
       }
-      
-      grid.innerHTML = filtered.map(book => `
-        <div class="book-card" onclick="openReadModal(${book.id})">
-          <img class="book-cover-img" src="${book.cover}" alt="${book.name}" 
-            onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect fill=%22%23E5E6EB%22 width=%22300%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%2386909C%22 font-size=%2248%22>📖</text></svg>'">
+      grid.innerHTML = filtered.map(book => {
+        const shortReview = (book.review || '').length > 60 ? (book.review||'').substring(0,60)+'...' : (book.review||'');
+        const hasMore = (book.review || '').length > 60;
+        return `<div class="book-card" onclick="openReadModal(${book.id})">
+          <img class="book-cover-img" src="${book.cover}" alt="${book.name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22220%22><rect fill=%22%23E5E6EB%22 width=%22300%22 height=%22220%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%2386909C%22 font-size=%2248%22>📖</text></svg>'">
           <div class="book-details">
             <div class="book-name">${book.name}</div>
             <div class="book-meta">✍️ ${book.author} · 👤 ${book.uploader}</div>
-            <div class="book-desc">${book.review || '暂无简介'}</div>
-            ${book.status === 0 ? '<span class="badge badge-pending">待审核</span>' : ''}
+            <div class="book-review" id="review-${book.id}">${shortReview}</div>
+            ${hasMore ? `<button class="review-toggle" onclick="event.stopPropagation();toggleReview(${book.id})">查看更多</button>` : ''}
+            ${book.status===0?'<span class="badge badge-pending">待审核</span>':''}
+            ${book.status===2?'<span class="badge badge-unpublished">已下架</span>':''}
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
+    }
+
+    function toggleReview(bookId) {
+      const book = books.find(b => b.id === bookId);
+      if (!book) return;
+      const el = document.getElementById('review-'+bookId);
+      const btn = el.nextElementSibling;
+      if (el.textContent.length < (book.review||'').length) {
+        el.textContent = book.review; btn.textContent = '收起';
+      } else {
+        el.textContent = (book.review||'').substring(0,60)+'...'; btn.textContent = '查看更多';
+      }
     }
 
     function renderAdminTable() {
       document.getElementById('adminTableBody').innerHTML = books.map(book => `
         <tr>
-          <td><img src="${book.cover}" style="width:40px;height:55px;object-fit:cover;border-radius:4px;" 
-            onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2255%22><rect fill=%22%23E5E6EB%22 width=%2240%22 height=%2255%22/></svg>'"></td>
+          <td><img src="${book.cover}" style="width:40px;height:55px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'"></td>
           <td><strong>${book.name}</strong></td>
           <td>${book.author}</td>
           <td>${categoryMap[book.category] || book.category}</td>
-          <td><span class="badge ${book.status===0?'badge-pending':book.status===1?'badge-published':'badge-unpublished'}">
-            ${['待审核','已上架','已下架'][book.status]}</span></td>
+          <td>${book.uploader}</td>
+          <td>${book.batch||'-'}</td>
+          <td>${book.uploadDate||'-'}</td>
+          <td><span class="badge ${book.status===0?'badge-pending':book.status===1?'badge-published':'badge-unpublished'}">${['待审核','已上架','已下架'][book.status]}</span></td>
           <td>
-            ${book.status===0?`<button onclick="approve(${book.id})" class="btn btn-sm btn-success">通过</button>
-              <button onclick="reject(${book.id})" class="btn btn-sm btn-warning">拒绝</button>`:''}
-            ${book.status===1?`<button onclick="unpublish(${book.id})" class="btn btn-sm btn-warning">下架</button>`:''}
-            ${book.status===2?`<button onclick="publish(${book.id})" class="btn btn-sm btn-success">上架</button>`:''}
-            <button onclick="removeBook(${book.id})" class="btn btn-sm btn-danger">删除</button>
+            <button onclick="openEditBookModal(${book.id})" class="btn btn-sm btn-primary">✏️ 编辑</button>
+            ${book.status===0?`<button onclick="updateBookStatus(${book.id},1)" class="btn btn-sm btn-success">✅ 通过</button><button onclick="updateBookStatus(${book.id},2)" class="btn btn-sm btn-warning">❌ 拒绝</button>`:''}
+            ${book.status===1?`<button onclick="updateBookStatus(${book.id},2)" class="btn btn-sm btn-warning">📴 下架</button>`:''}
+            ${book.status===2?`<button onclick="updateBookStatus(${book.id},1)" class="btn btn-sm btn-success">📢 上架</button>`:''}
+            <button onclick="deleteBook(${book.id})" class="btn btn-sm btn-danger">🗑 删除</button>
           </td>
         </tr>
       `).join('');
     }
 
-    // ==================== 操作 ====================
-    function approve(id) { updateStatus(id, 1); }
-    function reject(id) { updateStatus(id, 2); }
-    function unpublish(id) { updateStatus(id, 2); }
-    function publish(id) { updateStatus(id, 1); }
-    
-    function updateStatus(id, status) {
+    // ==================== 操作函数 ====================
+    function updateBookStatus(id, status) {
       const book = books.find(b => b.id === id);
       if (book) { book.status = status; saveToCloud(); renderAll(); }
     }
-    
-    function removeBook(id) {
-      if (confirm('确认删除？')) { books = books.filter(b => b.id !== id); saveToCloud(); renderAll(); }
+
+    function deleteBook(id) {
+      if (confirm('确认删除此书籍？')) { books = books.filter(b => b.id !== id); saveToCloud(); renderAll(); }
     }
 
-    function shareBook() {
-      const name = prompt('📖 书名：');
-      if (!name) return;
-      const author = prompt('✍️ 作者：');
-      const uploader = prompt('👤 您的名字：');
-      const review = prompt('💬 简介：') || '';
-      
-      books.push({
-        id: Date.now(), name, author: author || '未知',
-        cover: 'https://img.alicdn.com/imgextra/i3/2201317573534/O1CN01TjZQxr1rLHYZ2KUZf_!!2201317573534.jpg_430x430q90.jpg',
-        uploader: uploader || '匿名', review, category: 'tech', status: 0,
-        uploadDate: new Date().toISOString().slice(0, 10),
-        pages: ['<div class="page-content"><h2>内容</h2><p>' + (review || '待补充') + '</p></div>']
-      });
-      
+    // ==================== 上传书籍 ====================
+    document.getElementById('uploadForm').onsubmit = function(e) {
+      e.preventDefault();
+      const coverFile = this.bookCover.files[0];
+      if (!coverFile) { alert('请上传封面图片'); return; }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const content = this.bookContent.value;
+        let pages = [];
+        if (content) {
+          const chunks = content.match(/.{1,400}/g) || [content];
+          pages = chunks.map(c => `<div class="page-content"><p>${c}</p></div>`);
+        } else {
+          pages = ['<div class="page-content"><p>暂无内容</p></div>'];
+        }
+        books.push({
+          id: Date.now(), name: this.bookName.value, author: this.bookAuthor.value,
+          cover: ev.target.result, uploader: this.bookUploader.value,
+          review: this.bookReview.value, category: this.bookCategory.value,
+          batch: this.bookBatch.value, status: 0,
+          uploadDate: new Date().toISOString().slice(0, 10), pages
+        });
+        saveToCloud(); renderAll();
+        $('#uploadModal').addClass('hidden'); this.reset();
+        alert('✅ 分享成功！等待管理员审核。');
+      };
+      reader.readAsDataURL(coverFile);
+    };
+
+    // ==================== 编辑书籍 ====================
+    function openEditBookModal(bookId) {
+      const form = document.getElementById('editForm');
+      form.reset();
+      const catSelect = document.getElementById('editCategorySelect');
+      catSelect.innerHTML = '';
+      for (let k in categoryMap) {
+        if (k !== 'all' && k !== 'pending') catSelect.innerHTML += `<option value="${k}">${categoryMap[k]}</option>`;
+      }
+      if (bookId) {
+        const book = books.find(b => b.id === bookId);
+        if (book) {
+          document.getElementById('editModalTitle').textContent = '✏️ 编辑书籍';
+          form.bookId.value = book.id; form.bookName.value = book.name;
+          form.bookAuthor.value = book.author; form.bookUploader.value = book.uploader;
+          form.bookBatch.value = book.batch || ''; form.bookCategory.value = book.category;
+          form.bookDate.value = book.uploadDate || ''; form.bookStatus.value = book.status;
+          form.bookReview.value = book.review || '';
+        }
+      } else {
+        document.getElementById('editModalTitle').textContent = '➕ 添加新书籍';
+        form.bookId.value = ''; form.bookStatus.value = '1';
+        form.bookDate.value = new Date().toISOString().slice(0, 10);
+      }
+      $('#editModal').removeClass('hidden');
+    }
+
+    document.getElementById('editForm').onsubmit = function(e) {
+      e.preventDefault();
+      const bookId = this.bookId.value;
+      const coverFile = this.bookCover.files[0];
+      const processBook = (coverData) => {
+        const data = {
+          name: this.bookName.value, author: this.bookAuthor.value,
+          uploader: this.bookUploader.value, batch: this.bookBatch.value,
+          category: this.bookCategory.value, uploadDate: this.bookDate.value,
+          status: parseInt(this.bookStatus.value), review: this.bookReview.value
+        };
+        if (coverData) data.cover = coverData;
+        const content = this.bookContent.value;
+        if (content) {
+          const chunks = content.match(/.{1,400}/g) || [content];
+          data.pages = chunks.map(c => `<div class="page-content"><p>${c}</p></div>`);
+        }
+        if (bookId) {
+          const book = books.find(b => b.id === parseInt(bookId));
+          if (book) Object.assign(book, data);
+        } else {
+          if (!data.cover) data.cover = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22220%22><rect fill=%22%23E5E6EB%22 width=%22300%22 height=%22220%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%2386909C%22 font-size=%2248%22>📖</text></svg>';
+          if (!data.pages) data.pages = ['<div class="page-content"><p>暂无内容</p></div>'];
+          data.id = Date.now();
+          books.push(data);
+        }
+        saveToCloud(); renderAll();
+        $('#editModal').addClass('hidden');
+      };
+      if (coverFile && coverFile.size > 0) {
+        const reader = new FileReader();
+        reader.onload = ev => processBook(ev.target.result);
+        reader.readAsDataURL(coverFile);
+      } else {
+        processBook(null);
+      }
+    };
+
+    // ==================== 分类管理 ====================
+    function openCategoryModal() {
+      renderCategoryManage();
+      $('#categoryModal').removeClass('hidden');
+    }
+
+    function renderCategoryManage() {
+      const container = document.getElementById('categoryListManage');
+      container.innerHTML = '';
+      for (let k in categoryMap) {
+        if (k === 'all' || k === 'pending') continue;
+        container.innerHTML += `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;border:1px solid #E5E6EB;border-radius:8px;">
+            <span style="width:80px;color:#86909C;font-size:13px;">${k}</span>
+            <input type="text" value="${categoryMap[k]}" data-key="${k}" style="flex:1;padding:8px;border:1px solid #E5E6EB;border-radius:6px;">
+            <button onclick="updateCategory('${k}')" class="btn btn-sm btn-success">💾 保存</button>
+            <button onclick="deleteCategory('${k}')" class="btn btn-sm btn-danger">🗑 删除</button>
+          </div>`;
+      }
+    }
+
+    function editCategoryInline(key) {
+      const newName = prompt(`编辑分类 "${categoryMap[key]}" 的名称：`, categoryMap[key]);
+      if (newName && newName.trim()) {
+        categoryMap[key] = newName.trim();
+        saveToCloud(); renderAll();
+      }
+    }
+
+    function addCategory() {
+      const key = document.getElementById('newCatKey').value.trim();
+      const name = document.getElementById('newCatName').value.trim();
+      if (!key || !name) { alert('请填写完整'); return; }
+      if (categoryMap[key]) { alert('该分类标识已存在'); return; }
+      categoryMap[key] = name;
+      saveToCloud(); renderAll(); renderCategoryManage();
+      document.getElementById('newCatKey').value = '';
+      document.getElementById('newCatName').value = '';
+    }
+
+    function updateCategory(key) {
+      const input = document.querySelector(`input[data-key="${key}"]`);
+      if (input && input.value.trim()) {
+        categoryMap[key] = input.value.trim();
+        saveToCloud(); renderAll(); renderCategoryManage();
+        alert('✅ 分类已更新');
+      }
+    }
+
+    function deleteCategory(key) {
+      if (confirm(`删除分类 "${categoryMap[key]}"？该分类下的书籍将归为"技术类"。`)) {
+        books.forEach(b => { if (b.category === key) b.category = 'tech'; });
+        delete categoryMap[key];
+        saveToCloud(); renderAll(); renderCategoryManage();
+      }
+    }
+
+    // ==================== 修改密码 ====================
+    function openPasswordModal() {
+      document.getElementById('passwordForm').reset();
+      $('#passwordModal').removeClass('hidden');
+    }
+
+    document.getElementById('passwordForm').onsubmit = function(e) {
+      e.preventDefault();
+      if (this.oldPassword.value !== adminPassword) { alert('❌ 旧密码错误'); return; }
+      if (this.newPassword.value !== this.confirmPassword.value) { alert('❌ 两次密码不一致'); return; }
+      if (this.newPassword.value.length < 6) { alert('❌ 密码至少6位'); return; }
+      adminPassword = this.newPassword.value;
       saveToCloud();
-      renderAll();
-      alert('✅ 分享成功！等待管理员审核。');
-    }
+      $('#passwordModal').addClass('hidden');
+      alert('✅ 密码修改成功！');
+    };
 
+    // ==================== 翻书阅读 ====================
     function openReadModal(bookId) {
       const book = books.find(b => b.id === bookId);
       if (!book) return;
-      
       document.getElementById('readBookTitle').textContent = `📖 ${book.name}`;
       const container = document.getElementById('flipbook');
       container.innerHTML = '';
-      
       const cover = document.createElement('div');
       cover.className = 'book-page cover-page';
       cover.innerHTML = `<img src="${book.cover}" alt="${book.name}"><h2>${book.name}</h2><p>${book.author} · ${book.uploader}</p>`;
       container.appendChild(cover);
-      
       book.pages.forEach(page => {
         const div = document.createElement('div');
         div.className = 'book-page';
         div.innerHTML = page;
         container.appendChild(div);
       });
-      
       try {
-        $('#flipbook').turn({
-          width: 800, height: 500, display: 'double', autoCenter: true,
-          when: { turned: (e, page) => {
-            document.getElementById('pageIndicator').textContent = `${page} / ${$('#flipbook').turn('pages')}`;
-          }}
+        $('#flipbook').turn({ width: 800, height: 500, display: 'double', autoCenter: true,
+          when: { turned: (e, page) => { document.getElementById('pageIndicator').textContent = `${page} / ${$('#flipbook').turn('pages')}`; }}
         });
         $('#flipbook').turn('page', 1);
         document.getElementById('pageIndicator').textContent = `1 / ${$('#flipbook').turn('pages')}`;
       } catch(e) {
         document.getElementById('pageIndicator').textContent = `共 ${book.pages.length + 1} 页`;
       }
-      
-      document.getElementById('readModal').classList.remove('hidden');
+      $('#readModal').removeClass('hidden');
     }
 
     function closeReadModal() {
       try { $('#flipbook').turn('destroy'); } catch(e) {}
-      document.getElementById('readModal').classList.add('hidden');
+      $('#readModal').addClass('hidden');
     }
 
     function doSearch() { renderBooks(); }
 
     // ==================== 管理员登录 ====================
     document.getElementById('adminBtn').onclick = () => {
-      if (isAdmin) {
-        isAdmin = false;
-        currentCategory = 'all';
-        renderAll();
-      } else {
-        const pwd = prompt('请输入管理员密码：');
-        if (pwd === adminPassword) {
-          isAdmin = true;
-          renderAll();
-          alert('✅ 已进入管理模式');
-        } else if (pwd) {
-          alert('❌ 密码错误');
-        }
+      if (isAdmin) { isAdmin = false; currentCategory = 'all'; renderAll(); }
+      else {
+        const pwd = prompt('请输入管理员密码（默认：admin123）：');
+        if (pwd === adminPassword) { isAdmin = true; renderAll(); alert('✅ 已进入管理模式'); }
+        else if (pwd) { alert('❌ 密码错误'); }
       }
     };
 
-    document.getElementById('readModal').onclick = function(e) {
-      if (e.target === this) closeReadModal();
-    };
+    // 关闭模态框（点击背景）
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      m.addEventListener('click', function(e) { if (e.target === this) $(this).addClass('hidden'); });
+    });
 
     // ==================== 启动 ====================
+    loadLocal();
     loadFromCloud().then(() => renderAll());
   </script>
 </body>
