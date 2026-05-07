@@ -6,6 +6,50 @@
   <title>企业共享图书馆</title>
   <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/turn.js/3/turn.min.js"></script>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // 已使用您提供的配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyAI9yH4rk8bq5orFuNrPneK5shphITI56o",
+      authDomain: "library-d8816.firebaseapp.com",
+      databaseURL: "https://library-d8816-default-rtdb.firebaseio.com",
+      projectId: "library-d8816",
+      storageBucket: "library-d8816.firebasestorage.app",
+      messagingSenderId: "1014589013366",
+      appId: "1:1014589013366:web:bbc03efe219f392b844e57",
+      measurementId: "G-YYD23JSXK2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dataRef = ref(db, 'library');
+
+    // 监听云端数据变化，自动更新页面
+    onValue(dataRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        window.books = data.books || [];
+        window.categoryMap = data.categoryMap || {};
+        window.adminPassword = data.adminPassword || 'admin123';
+        localStorage.setItem('lib_books', JSON.stringify(window.books));
+        localStorage.setItem('lib_categories', JSON.stringify(window.categoryMap));
+        localStorage.setItem('lib_adminPwd', window.adminPassword);
+        if (typeof renderAll === 'function') renderAll();
+      }
+    });
+
+    // 保存数据到云端
+    window.syncToCloud = function() {
+      set(dataRef, {
+        books: window.books,
+        categoryMap: window.categoryMap,
+        adminPassword: window.adminPassword
+      });
+    };
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", "PingFang SC", sans-serif; }
     body { background: #f5f7fa; min-height: 100vh; }
@@ -14,21 +58,17 @@
     .navbar { background: white; box-shadow: 0 2px 12px rgba(0,0,0,0.08); position: sticky; top: 0; z-index: 100; }
     .nav-inner { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
     .logo { font-size: 22px; font-weight: bold; color: #1D2129; }
-    .sync-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+    .sync-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
     .sync-online { background: #E8FFEA; color: #00B42A; }
-    .sync-syncing { background: #FFF7E6; color: #FF7D00; }
-    .sync-offline { background: #FFECE8; color: #F53F3F; }
 
     .main-layout { max-width: 1200px; margin: 0 auto; padding: 24px 20px; display: flex; gap: 24px; }
     .sidebar { width: 180px; flex-shrink: 0; }
     .sidebar-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 80px; }
-    .sidebar-title { font-weight: 600; color: #1D2129; margin-bottom: 16px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-title { font-weight: 600; color: #1D2129; margin-bottom: 16px; font-size: 16px; }
     .cat-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
-    .cat-btn { width: 100%; text-align: left; border: none; background: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #4E5969; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+    .cat-btn { width: 100%; text-align: left; border: none; background: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #4E5969; }
     .cat-btn:hover { background: #F2F3F5; }
     .cat-btn.active { background: #E8F3FF; color: #165DFF; font-weight: 600; }
-    .cat-edit-btn { font-size: 11px; color: #86909C; cursor: pointer; padding: 2px 6px; border-radius: 4px; border: none; background: none; }
-    .cat-edit-btn:hover { background: #E5E6EB; color: #165DFF; }
 
     .content-area { flex: 1; min-width: 0; }
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
@@ -102,8 +142,8 @@
     <div class="nav-inner">
       <div class="logo">📚 企业共享图书馆</div>
       <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span id="syncBadge" class="sync-badge sync-online">🟢 已连接</span>
-        <input id="searchInput" class="search-box" type="text" placeholder="🔍 搜索书名、作者..." onkeypress="if(event.key==='Enter')doSearch()">
+        <span id="syncBadge" class="sync-badge sync-online">🟢 实时同步</span>
+        <input id="searchInput" class="search-box" type="text" placeholder="🔍 搜索..." onkeypress="if(event.key==='Enter')doSearch()">
         <button onclick="$('#uploadModal').removeClass('hidden')" class="btn btn-outline">📤 分享书籍</button>
         <button onclick="exportData()" class="btn btn-outline">💾 导出</button>
         <button onclick="importData()" class="btn btn-outline">📥 导入</button>
@@ -136,7 +176,6 @@
             <button onclick="openEditBookModal()" class="btn btn-success">➕ 添加书籍</button>
             <button onclick="openCategoryModal()" class="btn btn-primary">🏷️ 分类管理</button>
             <button onclick="openPasswordModal()" class="btn btn-default">🔒 修改密码</button>
-            <button onclick="syncNow()" class="btn btn-primary">🔄 立即同步</button>
           </div>
         </div>
         <div style="background:white;border-radius:12px;overflow:auto;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
@@ -163,14 +202,11 @@
         </div>
         <div class="form-group"><label>您的名字/部门 *</label><input type="text" name="bookUploader" required placeholder="例如：技术部-张三"></div>
         <div class="form-row">
-          <div class="form-group">
-            <label>书籍分类 *</label>
-            <select name="bookCategory" required></select>
-          </div>
-          <div class="form-group"><label>分享批次</label><input type="text" name="bookBatch" placeholder="例如：2024年读书月第一期"></div>
+          <div class="form-group"><label>书籍分类 *</label><select name="bookCategory" required></select></div>
+          <div class="form-group"><label>分享批次</label><input type="text" name="bookBatch" placeholder="例如：2024年读书月"></div>
         </div>
-        <div class="form-group"><label>书籍封面图片 *</label><input type="file" name="bookCover" accept="image/*" required></div>
-        <div class="form-group"><label>读后感/推荐语</label><textarea name="bookReview" rows="3" placeholder="分享一下您读完这本书的感受..."></textarea></div>
+        <div class="form-group"><label>书籍封面 *</label><input type="file" name="bookCover" accept="image/*" required></div>
+        <div class="form-group"><label>读后感/推荐语</label><textarea name="bookReview" rows="3" placeholder="分享一下您读这本书的感受..."></textarea></div>
         <div class="form-group"><label>书籍内容（系统会自动分页）</label><textarea name="bookContent" rows="6" placeholder="粘贴书籍内容，系统会自动按段落分页..."></textarea></div>
         <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;font-size:16px;">✅ 提交分享</button>
       </form>
@@ -211,22 +247,11 @@
           <div class="form-group"><label>分享批次</label><input type="text" name="bookBatch"></div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>分类</label>
-            <select name="bookCategory" id="editCategorySelect"></select>
-          </div>
-          <div class="form-group">
-            <label>上传日期</label>
-            <input type="date" name="bookDate">
-          </div>
+          <div class="form-group"><label>分类</label><select name="bookCategory" id="editCategorySelect"></select></div>
+          <div class="form-group"><label>上传日期</label><input type="date" name="bookDate"></div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>状态</label>
-            <select name="bookStatus">
-              <option value="0">待审核</option><option value="1">已上架</option><option value="2">已下架</option>
-            </select>
-          </div>
+          <div class="form-group"><label>状态</label><select name="bookStatus"><option value="0">待审核</option><option value="1">已上架</option><option value="2">已下架</option></select></div>
           <div class="form-group"><label>封面（不修改可留空）</label><input type="file" name="bookCover" accept="image/*"></div>
         </div>
         <div class="form-group"><label>读后感</label><textarea name="bookReview" rows="3"></textarea></div>
@@ -269,143 +294,21 @@
   </div>
 
   <script>
-    // ==================== 🔴 这里替换成你的新 Access Key ====================
-    const JSONBIN_API_KEY = '$2a$10$9vV6xNdyQSLaeBS4658xwOaC5GMmx.LIoSXTMaqLhqi92xFf7jgtK';
-    const JSONBIN_BIN_ID = '69eef176856a682189780a00';
-
-    // ==================== 全局状态 ====================
-    let books = [];
-    let categoryMap = {
-      all: '所有书籍', tech: '技术类', manage: '管理类', literature: '文学类',
-      psychology: '心理学类', career: '职场类', pending: '待审核'
-    };
-    let adminPassword = 'admin123';
+    // 全局变量（初始值，云端数据会覆盖）
+    window.books = [];
+    window.categoryMap = { all: '所有书籍', tech: '技术类', manage: '管理类', literature: '文学类', psychology: '心理学类', career: '职场类', pending: '待审核' };
+    window.adminPassword = 'admin123';
     let isAdmin = false;
     let currentCategory = 'all';
-    let isSyncing = false;
 
-    // ==================== 云端同步 ====================
-    function updateSyncBadge(status) {
-      const badge = document.getElementById('syncBadge');
-      const states = {
-        online: ['sync-online', '🟢 已连接'],
-        syncing: ['sync-syncing', '🟡 同步中...'],
-        offline: ['sync-offline', '🔴 离线 - 使用本地数据']
-      };
-      badge.className = 'sync-badge ' + states[status][0];
-      badge.textContent = states[status][1];
-    }
-
-    async function loadFromCloud() {
-      if (isSyncing) return;
-      isSyncing = true;
-      updateSyncBadge('syncing');
-      try {
-        const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-          headers: { 'X-Master-Key': JSONBIN_API_KEY }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const r = data.record;
-          books = r.books || [];
-          categoryMap = r.categoryMap || categoryMap;
-          adminPassword = r.adminPassword || 'admin123';
-          updateSyncBadge('online');
-          saveLocal();
-        } else {
-          throw new Error('加载失败: ' + res.status);
-        }
-      } catch (e) {
-        console.error(e);
-        loadLocal();
-        updateSyncBadge('offline');
-      }
-      isSyncing = false;
-      renderAll();
-    }
-
-    async function saveToCloud() {
-      if (isSyncing) return;
-      isSyncing = true;
-      updateSyncBadge('syncing');
-      try {
-        await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
-          body: JSON.stringify({ books, categoryMap, adminPassword })
-        });
-        updateSyncBadge('online');
-        saveLocal();
-      } catch (e) {
-        console.error(e);
-        updateSyncBadge('offline');
-        saveLocal();
-      }
-      isSyncing = false;
-    }
-
-    function syncNow() {
-      updateSyncBadge('syncing');
-      loadFromCloud().then(() => {
-        updateSyncBadge('online');
-        renderAll();
-      });
-    }
-
-    // 每5秒自动同步
-    setInterval(async () => {
-  if (!isSyncing) {
-    await loadFromCloud();
-    renderAll();
-  }
-}, 60000);
-
-    // 本地存储备份
+    // ==================== 工具函数 ====================
     function saveLocal() {
-      localStorage.setItem('lib_books', JSON.stringify(books));
-      localStorage.setItem('lib_categories', JSON.stringify(categoryMap));
-      localStorage.setItem('lib_adminPwd', adminPassword);
-    }
-    function loadLocal() {
-      const b = localStorage.getItem('lib_books');
-      const c = localStorage.getItem('lib_categories');
-      const p = localStorage.getItem('lib_adminPwd');
-      if (b) books = JSON.parse(b);
-      if (c) categoryMap = JSON.parse(c);
-      if (p) adminPassword = p;
+      localStorage.setItem('lib_books', JSON.stringify(window.books));
+      localStorage.setItem('lib_categories', JSON.stringify(window.categoryMap));
+      localStorage.setItem('lib_adminPwd', window.adminPassword);
     }
 
-    // ==================== 导出/导入 ====================
-    function exportData() {
-      const data = JSON.stringify({ books, categoryMap, adminPassword }, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `图书馆备份_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-    }
-
-    function importData() {
-      const input = document.createElement('input');
-      input.type = 'file'; input.accept = '.json';
-      input.onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          try {
-            const data = JSON.parse(ev.target.result);
-            if (confirm('导入将覆盖当前数据，确定继续？')) {
-              books = data.books || []; categoryMap = data.categoryMap || categoryMap;
-              adminPassword = data.adminPassword || 'admin123';
-              saveToCloud(); renderAll(); alert('✅ 导入成功！');
-            }
-          } catch (err) { alert('文件格式错误'); }
-        };
-        reader.readAsText(e.target.files[0]);
-      };
-      input.click();
-    }
-
-    // ==================== 渲染 ====================
+    // ==================== 渲染函数 ====================
     function renderAll() {
       renderCategoryNav();
       renderBooks();
@@ -417,10 +320,8 @@
       const sel = document.querySelector('#uploadForm select[name="bookCategory"]');
       if (sel) {
         sel.innerHTML = '';
-        for (let k in categoryMap) {
-          if (k !== 'all' && k !== 'pending') {
-            sel.innerHTML += `<option value="${k}">${categoryMap[k]}</option>`;
-          }
+        for (let k in window.categoryMap) {
+          if (k !== 'all' && k !== 'pending') sel.innerHTML += `<option value="${k}">${window.categoryMap[k]}</option>`;
         }
       }
     }
@@ -436,17 +337,10 @@
         { key: 'career', label: '💼 职场类' }
       ];
       if (isAdmin) cats.push({ key: 'pending', label: '⏳ 待审核' });
-      for (let k in categoryMap) {
-        if (!cats.find(c => c.key === k) && k !== 'all' && k !== 'pending') {
-          cats.push({ key: k, label: categoryMap[k] });
-        }
+      for (let k in window.categoryMap) {
+        if (!cats.find(c => c.key === k) && k !== 'all' && k !== 'pending') cats.push({ key: k, label: window.categoryMap[k] });
       }
-      nav.innerHTML = cats.map(c => `
-        <li><button class="cat-btn ${currentCategory === c.key ? 'active' : ''}" data-cat="${c.key}">
-          <span>${c.label}</span>
-          ${isAdmin && c.key !== 'all' && c.key !== 'pending' ? `<span class="cat-edit-btn" onclick="event.stopPropagation();editCategoryInline('${c.key}')">✏️</span>` : ''}
-        </button></li>
-      `).join('');
+      nav.innerHTML = cats.map(c => `<li><button class="cat-btn ${currentCategory === c.key ? 'active' : ''}" data-cat="${c.key}">${c.label}</button></li>`).join('');
       nav.querySelectorAll('.cat-btn').forEach(btn => {
         btn.onclick = () => {
           nav.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -458,8 +352,8 @@
     }
 
     function renderBooks() {
-      document.getElementById('listTitle').textContent = currentCategory === 'pending' ? '待审核书籍' : (categoryMap[currentCategory] || '所有书籍');
-      let filtered = [...books];
+      document.getElementById('listTitle').textContent = currentCategory === 'pending' ? '待审核书籍' : (window.categoryMap[currentCategory] || '所有书籍');
+      let filtered = [...window.books];
       if (currentCategory === 'pending') filtered = filtered.filter(b => b.status === 0);
       else if (currentCategory !== 'all') filtered = filtered.filter(b => b.category === currentCategory);
       if (!isAdmin) filtered = filtered.filter(b => b.status === 1);
@@ -489,24 +383,21 @@
     }
 
     function toggleReview(bookId) {
-      const book = books.find(b => b.id === bookId);
+      const book = window.books.find(b => b.id === bookId);
       if (!book) return;
       const el = document.getElementById('review-'+bookId);
       const btn = el.nextElementSibling;
-      if (el.textContent.length < (book.review||'').length) {
-        el.textContent = book.review; btn.textContent = '收起';
-      } else {
-        el.textContent = (book.review||'').substring(0,60)+'...'; btn.textContent = '查看更多';
-      }
+      if (el.textContent.length < (book.review||'').length) { el.textContent = book.review; btn.textContent = '收起'; }
+      else { el.textContent = (book.review||'').substring(0,60)+'...'; btn.textContent = '查看更多'; }
     }
 
     function renderAdminTable() {
-      document.getElementById('adminTableBody').innerHTML = books.map(book => `
+      document.getElementById('adminTableBody').innerHTML = window.books.map(book => `
         <tr>
           <td><img src="${book.cover}" style="width:40px;height:55px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'"></td>
           <td><strong>${book.name}</strong></td>
           <td>${book.author}</td>
-          <td>${categoryMap[book.category] || book.category}</td>
+          <td>${window.categoryMap[book.category] || book.category}</td>
           <td>${book.uploader}</td>
           <td>${book.batch||'-'}</td>
           <td>${book.uploadDate||'-'}</td>
@@ -522,14 +413,13 @@
       `).join('');
     }
 
-    // ==================== 操作函数 ====================
+    // ==================== 数据操作 ====================
     function updateBookStatus(id, status) {
-      const book = books.find(b => b.id === id);
-      if (book) { book.status = status; saveToCloud(); renderAll(); }
+      const book = window.books.find(b => b.id === id);
+      if (book) { book.status = status; window.syncToCloud(); }
     }
-
     function deleteBook(id) {
-      if (confirm('确认删除此书籍？')) { books = books.filter(b => b.id !== id); saveToCloud(); renderAll(); }
+      if (confirm('确认删除？')) { window.books = window.books.filter(b => b.id !== id); window.syncToCloud(); }
     }
 
     // ==================== 上传书籍 ====================
@@ -544,17 +434,15 @@
         if (content) {
           const chunks = content.match(/.{1,400}/g) || [content];
           pages = chunks.map(c => `<div class="page-content"><p>${c}</p></div>`);
-        } else {
-          pages = ['<div class="page-content"><p>暂无内容</p></div>'];
-        }
-        books.push({
+        } else pages = ['<div class="page-content"><p>暂无内容</p></div>'];
+        window.books.push({
           id: Date.now(), name: this.bookName.value, author: this.bookAuthor.value,
           cover: ev.target.result, uploader: this.bookUploader.value,
           review: this.bookReview.value, category: this.bookCategory.value,
           batch: this.bookBatch.value, status: 0,
           uploadDate: new Date().toISOString().slice(0, 10), pages
         });
-        saveToCloud(); renderAll();
+        window.syncToCloud();
         $('#uploadModal').addClass('hidden'); this.reset();
         alert('✅ 分享成功！等待管理员审核。');
       };
@@ -567,11 +455,11 @@
       form.reset();
       const catSelect = document.getElementById('editCategorySelect');
       catSelect.innerHTML = '';
-      for (let k in categoryMap) {
-        if (k !== 'all' && k !== 'pending') catSelect.innerHTML += `<option value="${k}">${categoryMap[k]}</option>`;
+      for (let k in window.categoryMap) {
+        if (k !== 'all' && k !== 'pending') catSelect.innerHTML += `<option value="${k}">${window.categoryMap[k]}</option>`;
       }
       if (bookId) {
-        const book = books.find(b => b.id === bookId);
+        const book = window.books.find(b => b.id === bookId);
         if (book) {
           document.getElementById('editModalTitle').textContent = '✏️ 编辑书籍';
           form.bookId.value = book.id; form.bookName.value = book.name;
@@ -606,103 +494,82 @@
           data.pages = chunks.map(c => `<div class="page-content"><p>${c}</p></div>`);
         }
         if (bookId) {
-          const book = books.find(b => b.id === parseInt(bookId));
+          const book = window.books.find(b => b.id === parseInt(bookId));
           if (book) Object.assign(book, data);
         } else {
           if (!data.cover) data.cover = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22220%22><rect fill=%22%23E5E6EB%22 width=%22300%22 height=%22220%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%2386909C%22 font-size=%2248%22>📖</text></svg>';
           if (!data.pages) data.pages = ['<div class="page-content"><p>暂无内容</p></div>'];
           data.id = Date.now();
-          books.push(data);
+          window.books.push(data);
         }
-        saveToCloud(); renderAll();
+        window.syncToCloud();
         $('#editModal').addClass('hidden');
       };
       if (coverFile && coverFile.size > 0) {
         const reader = new FileReader();
         reader.onload = ev => processBook(ev.target.result);
         reader.readAsDataURL(coverFile);
-      } else {
-        processBook(null);
-      }
+      } else processBook(null);
     };
 
     // ==================== 分类管理 ====================
-    function openCategoryModal() {
-      renderCategoryManage();
-      $('#categoryModal').removeClass('hidden');
-    }
-
+    function openCategoryModal() { renderCategoryManage(); $('#categoryModal').removeClass('hidden'); }
     function renderCategoryManage() {
       const container = document.getElementById('categoryListManage');
       container.innerHTML = '';
-      for (let k in categoryMap) {
+      for (let k in window.categoryMap) {
         if (k === 'all' || k === 'pending') continue;
-        container.innerHTML += `
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;border:1px solid #E5E6EB;border-radius:8px;">
-            <span style="width:80px;color:#86909C;font-size:13px;">${k}</span>
-            <input type="text" value="${categoryMap[k]}" data-key="${k}" style="flex:1;padding:8px;border:1px solid #E5E6EB;border-radius:6px;">
-            <button onclick="updateCategory('${k}')" class="btn btn-sm btn-success">💾 保存</button>
-            <button onclick="deleteCategory('${k}')" class="btn btn-sm btn-danger">🗑 删除</button>
-          </div>`;
+        container.innerHTML += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;border:1px solid #E5E6EB;border-radius:8px;">
+          <span style="width:80px;color:#86909C;">${k}</span>
+          <input type="text" value="${window.categoryMap[k]}" data-key="${k}" style="flex:1;padding:8px;border:1px solid #E5E6EB;border-radius:6px;">
+          <button onclick="updateCategory('${k}')" class="btn btn-sm btn-success">💾 保存</button>
+          <button onclick="deleteCategory('${k}')" class="btn btn-sm btn-danger">🗑 删除</button>
+        </div>`;
       }
     }
-
-    function editCategoryInline(key) {
-      const newName = prompt(`编辑分类 "${categoryMap[key]}" 的名称：`, categoryMap[key]);
-      if (newName && newName.trim()) {
-        categoryMap[key] = newName.trim();
-        saveToCloud(); renderAll();
-      }
-    }
-
     function addCategory() {
       const key = document.getElementById('newCatKey').value.trim();
       const name = document.getElementById('newCatName').value.trim();
       if (!key || !name) { alert('请填写完整'); return; }
-      if (categoryMap[key]) { alert('该分类标识已存在'); return; }
-      categoryMap[key] = name;
-      saveToCloud(); renderAll(); renderCategoryManage();
+      if (window.categoryMap[key]) { alert('该标识已存在'); return; }
+      window.categoryMap[key] = name;
+      window.syncToCloud();
       document.getElementById('newCatKey').value = '';
       document.getElementById('newCatName').value = '';
+      renderCategoryManage();
     }
-
     function updateCategory(key) {
       const input = document.querySelector(`input[data-key="${key}"]`);
       if (input && input.value.trim()) {
-        categoryMap[key] = input.value.trim();
-        saveToCloud(); renderAll(); renderCategoryManage();
-        alert('✅ 分类已更新');
+        window.categoryMap[key] = input.value.trim();
+        window.syncToCloud();
+        renderCategoryManage();
       }
     }
-
     function deleteCategory(key) {
-      if (confirm(`删除分类 "${categoryMap[key]}"？该分类下的书籍将归为"技术类"。`)) {
-        books.forEach(b => { if (b.category === key) b.category = 'tech'; });
-        delete categoryMap[key];
-        saveToCloud(); renderAll(); renderCategoryManage();
+      if (confirm(`删除分类 "${window.categoryMap[key]}"？该分类下的书籍将归为"技术类"。`)) {
+        window.books.forEach(b => { if (b.category === key) b.category = 'tech'; });
+        delete window.categoryMap[key];
+        window.syncToCloud();
       }
     }
 
-    // ==================== 修改密码 ====================
-    function openPasswordModal() {
-      document.getElementById('passwordForm').reset();
-      $('#passwordModal').removeClass('hidden');
-    }
-
+    // ==================== 密码修改 ====================
+    function openPasswordModal() { document.getElementById('passwordForm').reset(); $('#passwordModal').removeClass('hidden'); }
     document.getElementById('passwordForm').onsubmit = function(e) {
       e.preventDefault();
-      if (this.oldPassword.value !== adminPassword) { alert('❌ 旧密码错误'); return; }
+      if (this.oldPassword.value !== window.adminPassword) { alert('❌ 旧密码错误'); return; }
       if (this.newPassword.value !== this.confirmPassword.value) { alert('❌ 两次密码不一致'); return; }
       if (this.newPassword.value.length < 6) { alert('❌ 密码至少6位'); return; }
-      adminPassword = this.newPassword.value;
-      saveToCloud();
+      window.adminPassword = this.newPassword.value;
+      window.syncToCloud();
       $('#passwordModal').addClass('hidden');
       alert('✅ 密码修改成功！');
     };
 
     // ==================== 翻书阅读 ====================
     function openReadModal(bookId) {
-      const book = books.find(b => b.id === bookId);
+      const book = window.books.find(b => b.id === bookId);
       if (!book) return;
       document.getElementById('readBookTitle').textContent = `📖 ${book.name}`;
       const container = document.getElementById('flipbook');
@@ -728,10 +595,37 @@
       }
       $('#readModal').removeClass('hidden');
     }
+    function closeReadModal() { try { $('#flipbook').turn('destroy'); } catch(e) {} $('#readModal').addClass('hidden'); }
 
-    function closeReadModal() {
-      try { $('#flipbook').turn('destroy'); } catch(e) {}
-      $('#readModal').addClass('hidden');
+    // ==================== 导出/导入 ====================
+    function exportData() {
+      const data = JSON.stringify({ books: window.books, categoryMap: window.categoryMap, adminPassword: window.adminPassword }, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `图书馆备份_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    }
+    function importData() {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.json';
+      input.onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (confirm('导入将覆盖当前数据，确定继续？')) {
+              window.books = data.books || [];
+              window.categoryMap = data.categoryMap || window.categoryMap;
+              window.adminPassword = data.adminPassword || 'admin123';
+              window.syncToCloud();
+              alert('✅ 导入成功！');
+            }
+          } catch (err) { alert('文件格式错误'); }
+        };
+        reader.readAsText(e.target.files[0]);
+      };
+      input.click();
     }
 
     function doSearch() { renderBooks(); }
@@ -741,7 +635,7 @@
       if (isAdmin) { isAdmin = false; currentCategory = 'all'; renderAll(); }
       else {
         const pwd = prompt('请输入管理员密码（默认：admin123）：');
-        if (pwd === adminPassword) { isAdmin = true; renderAll(); alert('✅ 已进入管理模式'); }
+        if (pwd === window.adminPassword) { isAdmin = true; renderAll(); alert('✅ 已进入管理模式'); }
         else if (pwd) { alert('❌ 密码错误'); }
       }
     };
@@ -751,9 +645,16 @@
       m.addEventListener('click', function(e) { if (e.target === this) $(this).addClass('hidden'); });
     });
 
-    // ==================== 启动 ====================
-    loadLocal();
-    loadFromCloud().then(() => renderAll());
+    // 初始加载本地缓存（防止Firebase未响应时的空白）
+    (function() {
+      const lb = localStorage.getItem('lib_books');
+      const lc = localStorage.getItem('lib_categories');
+      const lp = localStorage.getItem('lib_adminPwd');
+      if (lb) window.books = JSON.parse(lb);
+      if (lc) window.categoryMap = JSON.parse(lc);
+      if (lp) window.adminPassword = lp;
+      renderAll();
+    })();
   </script>
 </body>
 </html>
