@@ -6,12 +6,10 @@
   <title>企业共享图书馆</title>
   <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/turn.js/3/turn.min.js"></script>
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    // 已使用您提供的配置
     const firebaseConfig = {
       apiKey: "AIzaSyAI9yH4rk8bq5orFuNrPneK5shphITI56o",
       authDomain: "library-d8816.firebaseapp.com",
@@ -27,7 +25,6 @@
     const db = getDatabase(app);
     const dataRef = ref(db, 'library');
 
-    // 监听云端数据变化，自动更新页面
     onValue(dataRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -41,7 +38,6 @@
       }
     });
 
-    // 保存数据到云端
     window.syncToCloud = function() {
       set(dataRef, {
         books: window.books,
@@ -82,6 +78,7 @@
     .book-name { font-size: 16px; font-weight: 600; color: #1D2129; margin-bottom: 4px; }
     .book-meta { color: #4E5969; font-size: 13px; margin-bottom: 4px; }
     .book-review { color: #4E5969; font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .book-review.expanded { display: block; -webkit-line-clamp: unset; overflow: visible; }
     .review-toggle { color: #165DFF; font-size: 12px; cursor: pointer; border: none; background: none; margin-top: 4px; }
     .review-toggle:hover { text-decoration: underline; }
 
@@ -117,8 +114,10 @@
     .page-content { padding: 40px; height: 100%; overflow-y: auto; }
     .page-content h2 { margin-bottom: 20px; color: #1D2129; }
     .page-content p { line-height: 2; margin-bottom: 1em; text-indent: 2em; color: #4E5969; }
-    .cover-page { display: table-cell; vertical-align: middle; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 400px; height: 500px; }
-    .cover-page img { width: 150px; height: 200px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); object-fit: cover; }
+    .cover-page { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 400px; height: 500px; }
+    .cover-page img { width: 200px; height: 260px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); object-fit: cover; }
+    .cover-page h2 { font-size: 24px; margin-bottom: 8px; }
+    .cover-page p { font-size: 14px; margin: 4px 0; opacity: 0.95; }
 
     .search-box { border: 2px solid #E5E6EB; border-radius: 8px; padding: 10px 14px; width: 200px; font-size: 14px; }
     .search-box:focus { outline: none; border-color: #165DFF; }
@@ -191,10 +190,7 @@
   <!-- 上传书籍模态框 -->
   <div id="uploadModal" class="modal-overlay hidden">
     <div class="modal-box">
-      <div class="modal-header">
-        <h3>📤 分享我的书籍</h3>
-        <button class="modal-close" onclick="$('#uploadModal').addClass('hidden')">&times;</button>
-      </div>
+      <div class="modal-header"><h3>📤 分享我的书籍</h3><button class="modal-close" onclick="$('#uploadModal').addClass('hidden')">&times;</button></div>
       <form id="uploadForm">
         <div class="form-row">
           <div class="form-group"><label>书名 *</label><input type="text" name="bookName" required></div>
@@ -216,15 +212,12 @@
   <!-- 阅读模态框 -->
   <div id="readModal" class="modal-overlay hidden">
     <div class="modal-box modal-lg">
-      <div class="modal-header">
-        <h3 id="readBookTitle">📖 阅读中...</h3>
-        <button class="modal-close" onclick="closeReadModal()">&times;</button>
-      </div>
+      <div class="modal-header"><h3 id="readBookTitle">📖 阅读中...</h3><button class="modal-close" onclick="closeReadModal()">&times;</button></div>
       <div id="bookWrapper"><div id="flipbook" class="book-container"></div></div>
       <div style="display:flex;justify-content:center;align-items:center;gap:20px;margin-top:16px;">
-        <button onclick="$('#flipbook').turn('previous')" class="btn btn-default">◀ 上一页</button>
+        <button id="prevPageBtn" class="btn btn-default">◀ 上一页</button>
         <span id="pageIndicator" style="color:#86909C;font-weight:500;">1 / 1</span>
-        <button onclick="$('#flipbook').turn('next')" class="btn btn-default">下一页 ▶</button>
+        <button id="nextPageBtn" class="btn btn-default">下一页 ▶</button>
       </div>
     </div>
   </div>
@@ -232,10 +225,7 @@
   <!-- 编辑书籍模态框 -->
   <div id="editModal" class="modal-overlay hidden">
     <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="editModalTitle">编辑书籍</h3>
-        <button class="modal-close" onclick="$('#editModal').addClass('hidden')">&times;</button>
-      </div>
+      <div class="modal-header"><h3 id="editModalTitle">编辑书籍</h3><button class="modal-close" onclick="$('#editModal').addClass('hidden')">&times;</button></div>
       <form id="editForm">
         <input type="hidden" name="bookId">
         <div class="form-row">
@@ -264,10 +254,7 @@
   <!-- 分类管理模态框 -->
   <div id="categoryModal" class="modal-overlay hidden">
     <div class="modal-box">
-      <div class="modal-header">
-        <h3>🏷️ 分类管理</h3>
-        <button class="modal-close" onclick="$('#categoryModal').addClass('hidden')">&times;</button>
-      </div>
+      <div class="modal-header"><h3>🏷️ 分类管理</h3><button class="modal-close" onclick="$('#categoryModal').addClass('hidden')">&times;</button></div>
       <div id="categoryListManage" style="margin-bottom:16px;"></div>
       <div style="display:flex;gap:8px;">
         <input id="newCatKey" type="text" placeholder="分类标识(英文)" style="flex:1;padding:10px;border:2px solid #E5E6EB;border-radius:8px;">
@@ -280,10 +267,7 @@
   <!-- 修改密码模态框 -->
   <div id="passwordModal" class="modal-overlay hidden">
     <div class="modal-box" style="max-width:400px;">
-      <div class="modal-header">
-        <h3>🔒 修改管理员密码</h3>
-        <button class="modal-close" onclick="$('#passwordModal').addClass('hidden')">&times;</button>
-      </div>
+      <div class="modal-header"><h3>🔒 修改管理员密码</h3><button class="modal-close" onclick="$('#passwordModal').addClass('hidden')">&times;</button></div>
       <form id="passwordForm">
         <div class="form-group"><label>旧密码</label><input type="password" name="oldPassword" required></div>
         <div class="form-group"><label>新密码（至少6位）</label><input type="password" name="newPassword" required></div>
@@ -294,21 +278,18 @@
   </div>
 
   <script>
-    // 全局变量（初始值，云端数据会覆盖）
     window.books = [];
     window.categoryMap = { all: '所有书籍', tech: '技术类', manage: '管理类', literature: '文学类', psychology: '心理学类', career: '职场类', pending: '待审核' };
     window.adminPassword = 'admin123';
     let isAdmin = false;
     let currentCategory = 'all';
 
-    // ==================== 工具函数 ====================
     function saveLocal() {
       localStorage.setItem('lib_books', JSON.stringify(window.books));
       localStorage.setItem('lib_categories', JSON.stringify(window.categoryMap));
       localStorage.setItem('lib_adminPwd', window.adminPassword);
     }
 
-    // ==================== 渲染函数 ====================
     function renderAll() {
       renderCategoryNav();
       renderBooks();
@@ -316,7 +297,6 @@
       document.getElementById('userView').classList.toggle('hidden', isAdmin);
       document.getElementById('adminView').classList.toggle('hidden', !isAdmin);
       document.getElementById('adminBtn').textContent = isAdmin ? '👋 退出管理' : '🔑 管理员';
-      // 更新上传表单的分类下拉
       const sel = document.querySelector('#uploadForm select[name="bookCategory"]');
       if (sel) {
         sel.innerHTML = '';
@@ -382,13 +362,22 @@
       }).join('');
     }
 
+    // 修复：读后感展开/收起
     function toggleReview(bookId) {
       const book = window.books.find(b => b.id === bookId);
       if (!book) return;
-      const el = document.getElementById('review-'+bookId);
-      const btn = el.nextElementSibling;
-      if (el.textContent.length < (book.review||'').length) { el.textContent = book.review; btn.textContent = '收起'; }
-      else { el.textContent = (book.review||'').substring(0,60)+'...'; btn.textContent = '查看更多'; }
+      const el = document.getElementById('review-' + bookId);
+      if (!el) return;
+      const btn = el.parentNode.querySelector('.review-toggle');
+      if (el.classList.contains('expanded')) {
+        el.classList.remove('expanded');
+        el.textContent = (book.review || '').length > 60 ? (book.review || '').substring(0, 60) + '...' : (book.review || '');
+        if (btn) btn.textContent = '查看更多';
+      } else {
+        el.classList.add('expanded');
+        el.textContent = book.review || '';
+        if (btn) btn.textContent = '收起';
+      }
     }
 
     function renderAdminTable() {
@@ -413,7 +402,6 @@
       `).join('');
     }
 
-    // ==================== 数据操作 ====================
     function updateBookStatus(id, status) {
       const book = window.books.find(b => b.id === id);
       if (book) { book.status = status; window.syncToCloud(); }
@@ -422,7 +410,6 @@
       if (confirm('确认删除？')) { window.books = window.books.filter(b => b.id !== id); window.syncToCloud(); }
     }
 
-    // ==================== 上传书籍 ====================
     document.getElementById('uploadForm').onsubmit = function(e) {
       e.preventDefault();
       const coverFile = this.bookCover.files[0];
@@ -449,7 +436,6 @@
       reader.readAsDataURL(coverFile);
     };
 
-    // ==================== 编辑书籍 ====================
     function openEditBookModal(bookId) {
       const form = document.getElementById('editForm');
       form.reset();
@@ -512,7 +498,6 @@
       } else processBook(null);
     };
 
-    // ==================== 分类管理 ====================
     function openCategoryModal() { renderCategoryManage(); $('#categoryModal').removeClass('hidden'); }
     function renderCategoryManage() {
       const container = document.getElementById('categoryListManage');
@@ -554,7 +539,6 @@
       }
     }
 
-    // ==================== 密码修改 ====================
     function openPasswordModal() { document.getElementById('passwordForm').reset(); $('#passwordModal').removeClass('hidden'); }
     document.getElementById('passwordForm').onsubmit = function(e) {
       e.preventDefault();
@@ -567,37 +551,75 @@
       alert('✅ 密码修改成功！');
     };
 
-    // ==================== 翻书阅读 ====================
+    // 修复：阅读模态框彻底重建
     function openReadModal(bookId) {
       const book = window.books.find(b => b.id === bookId);
       if (!book) return;
       document.getElementById('readBookTitle').textContent = `📖 ${book.name}`;
-      const container = document.getElementById('flipbook');
-      container.innerHTML = '';
+
+      // 销毁旧实例并移除整个flipbook
+      try { $('#flipbook').turn('destroy'); } catch(e) {}
+      const old = document.getElementById('flipbook');
+      if (old) old.remove();
+
+      // 创建全新容器
+      const wrapper = document.getElementById('bookWrapper');
+      const newFlipbook = document.createElement('div');
+      newFlipbook.id = 'flipbook';
+      newFlipbook.className = 'book-container';
+      wrapper.appendChild(newFlipbook);
+
+      // 封面页
       const cover = document.createElement('div');
       cover.className = 'book-page cover-page';
-      cover.innerHTML = `<img src="${book.cover}" alt="${book.name}"><h2>${book.name}</h2><p>${book.author} · ${book.uploader}</p>`;
-      container.appendChild(cover);
+      cover.innerHTML = `
+        <img src="${book.cover}" alt="${book.name}">
+        <h2>${book.name}</h2>
+        <p><strong>作者：</strong>${book.author}</p>
+        <p><strong>分享者：</strong>${book.uploader}</p>
+      `;
+      newFlipbook.appendChild(cover);
+
+      // 内容页
       book.pages.forEach(page => {
         const div = document.createElement('div');
         div.className = 'book-page';
         div.innerHTML = page;
-        container.appendChild(div);
+        newFlipbook.appendChild(div);
       });
+
+      // 初始化turn.js
       try {
-        $('#flipbook').turn({ width: 800, height: 500, display: 'double', autoCenter: true,
-          when: { turned: (e, page) => { document.getElementById('pageIndicator').textContent = `${page} / ${$('#flipbook').turn('pages')}`; }}
+        $('#flipbook').turn({
+          width: 800,
+          height: 500,
+          display: 'double',
+          autoCenter: true,
+          when: {
+            turned: function(e, page) {
+              document.getElementById('pageIndicator').textContent = `${page} / ${$('#flipbook').turn('pages')}`;
+            }
+          }
         });
         $('#flipbook').turn('page', 1);
         document.getElementById('pageIndicator').textContent = `1 / ${$('#flipbook').turn('pages')}`;
+        // 绑定翻页按钮
+        document.getElementById('prevPageBtn').onclick = () => $('#flipbook').turn('previous');
+        document.getElementById('nextPageBtn').onclick = () => $('#flipbook').turn('next');
       } catch(e) {
         document.getElementById('pageIndicator').textContent = `共 ${book.pages.length + 1} 页`;
       }
+
       $('#readModal').removeClass('hidden');
     }
-    function closeReadModal() { try { $('#flipbook').turn('destroy'); } catch(e) {} $('#readModal').addClass('hidden'); }
 
-    // ==================== 导出/导入 ====================
+    function closeReadModal() {
+      try { $('#flipbook').turn('destroy'); } catch(e) {}
+      const old = document.getElementById('flipbook');
+      if (old) old.remove();
+      $('#readModal').addClass('hidden');
+    }
+
     function exportData() {
       const data = JSON.stringify({ books: window.books, categoryMap: window.categoryMap, adminPassword: window.adminPassword }, null, 2);
       const blob = new Blob([data], { type: 'application/json' });
@@ -630,7 +652,6 @@
 
     function doSearch() { renderBooks(); }
 
-    // ==================== 管理员登录 ====================
     document.getElementById('adminBtn').onclick = () => {
       if (isAdmin) { isAdmin = false; currentCategory = 'all'; renderAll(); }
       else {
@@ -640,12 +661,10 @@
       }
     };
 
-    // 关闭模态框（点击背景）
     document.querySelectorAll('.modal-overlay').forEach(m => {
       m.addEventListener('click', function(e) { if (e.target === this) $(this).addClass('hidden'); });
     });
 
-    // 初始加载本地缓存（防止Firebase未响应时的空白）
     (function() {
       const lb = localStorage.getItem('lib_books');
       const lc = localStorage.getItem('lib_categories');
