@@ -6,46 +6,6 @@
   <title>企业共享图书馆</title>
   <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/turn.js/3/turn.min.js"></script>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAI9yH4rk8bq5orFuNrPneK5shphITI56o",
-      authDomain: "library-d8816.firebaseapp.com",
-      databaseURL: "https://library-d8816-default-rtdb.firebaseio.com",
-      projectId: "library-d8816",
-      storageBucket: "library-d8816.firebasestorage.app",
-      messagingSenderId: "1014589013366",
-      appId: "1:1014589013366:web:bbc03efe219f392b844e57",
-      measurementId: "G-YYD23JSXK2"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const dataRef = ref(db, 'library');
-
-    onValue(dataRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        window.books = data.books || [];
-        window.categoryMap = data.categoryMap || {};
-        window.adminPassword = data.adminPassword || 'admin123';
-        localStorage.setItem('lib_books', JSON.stringify(window.books));
-        localStorage.setItem('lib_categories', JSON.stringify(window.categoryMap));
-        localStorage.setItem('lib_adminPwd', window.adminPassword);
-        if (typeof renderAll === 'function') renderAll();
-      }
-    });
-
-    window.syncToCloud = function() {
-      set(dataRef, {
-        books: window.books,
-        categoryMap: window.categoryMap,
-        adminPassword: window.adminPassword
-      });
-    };
-  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", "PingFang SC", sans-serif; }
     body { background: #f5f7fa; min-height: 100vh; }
@@ -78,7 +38,6 @@
     .book-name { font-size: 16px; font-weight: 600; color: #1D2129; margin-bottom: 4px; }
     .book-meta { color: #4E5969; font-size: 13px; margin-bottom: 4px; }
     .book-review { color: #4E5969; font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .book-review.expanded { display: block; -webkit-line-clamp: unset; overflow: visible; }
     .review-toggle { color: #165DFF; font-size: 12px; cursor: pointer; border: none; background: none; margin-top: 4px; }
     .review-toggle:hover { text-decoration: underline; }
 
@@ -141,7 +100,7 @@
     <div class="nav-inner">
       <div class="logo">📚 企业共享图书馆</div>
       <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span id="syncBadge" class="sync-badge sync-online">🟢 实时同步</span>
+        <span id="syncBadge" class="sync-badge sync-online">💾 本地模式</span>
         <input id="searchInput" class="search-box" type="text" placeholder="🔍 搜索..." onkeypress="if(event.key==='Enter')doSearch()">
         <button onclick="$('#uploadModal').removeClass('hidden')" class="btn btn-outline">📤 分享书籍</button>
         <button onclick="exportData()" class="btn btn-outline">💾 导出</button>
@@ -187,7 +146,7 @@
     </main>
   </div>
 
-  <!-- 上传书籍模态框 -->
+  <!-- 模态框：上传、阅读、编辑、分类、密码（保持与之前相同） -->
   <div id="uploadModal" class="modal-overlay hidden">
     <div class="modal-box">
       <div class="modal-header"><h3>📤 分享我的书籍</h3><button class="modal-close" onclick="$('#uploadModal').addClass('hidden')">&times;</button></div>
@@ -209,7 +168,6 @@
     </div>
   </div>
 
-  <!-- 阅读模态框 -->
   <div id="readModal" class="modal-overlay hidden">
     <div class="modal-box modal-lg">
       <div class="modal-header"><h3 id="readBookTitle">📖 阅读中...</h3><button class="modal-close" onclick="closeReadModal()">&times;</button></div>
@@ -222,7 +180,6 @@
     </div>
   </div>
 
-  <!-- 编辑书籍模态框 -->
   <div id="editModal" class="modal-overlay hidden">
     <div class="modal-box">
       <div class="modal-header"><h3 id="editModalTitle">编辑书籍</h3><button class="modal-close" onclick="$('#editModal').addClass('hidden')">&times;</button></div>
@@ -251,7 +208,6 @@
     </div>
   </div>
 
-  <!-- 分类管理模态框 -->
   <div id="categoryModal" class="modal-overlay hidden">
     <div class="modal-box">
       <div class="modal-header"><h3>🏷️ 分类管理</h3><button class="modal-close" onclick="$('#categoryModal').addClass('hidden')">&times;</button></div>
@@ -264,7 +220,6 @@
     </div>
   </div>
 
-  <!-- 修改密码模态框 -->
   <div id="passwordModal" class="modal-overlay hidden">
     <div class="modal-box" style="max-width:400px;">
       <div class="modal-header"><h3>🔒 修改管理员密码</h3><button class="modal-close" onclick="$('#passwordModal').addClass('hidden')">&times;</button></div>
@@ -278,18 +233,29 @@
   </div>
 
   <script>
+    // ========== 全局数据 ==========
     window.books = [];
     window.categoryMap = { all: '所有书籍', tech: '技术类', manage: '管理类', literature: '文学类', psychology: '心理学类', career: '职场类', pending: '待审核' };
     window.adminPassword = 'admin123';
     let isAdmin = false;
     let currentCategory = 'all';
 
-    function saveLocal() {
+    // ========== 本地存储 ==========
+    function saveToLocal() {
       localStorage.setItem('lib_books', JSON.stringify(window.books));
       localStorage.setItem('lib_categories', JSON.stringify(window.categoryMap));
       localStorage.setItem('lib_adminPwd', window.adminPassword);
     }
+    function loadFromLocal() {
+      const b = localStorage.getItem('lib_books');
+      const c = localStorage.getItem('lib_categories');
+      const p = localStorage.getItem('lib_adminPwd');
+      if (b) window.books = JSON.parse(b);
+      if (c) window.categoryMap = JSON.parse(c);
+      if (p) window.adminPassword = p;
+    }
 
+    // ========== 渲染函数 ==========
     function renderAll() {
       renderCategoryNav();
       renderBooks();
@@ -297,6 +263,7 @@
       document.getElementById('userView').classList.toggle('hidden', isAdmin);
       document.getElementById('adminView').classList.toggle('hidden', !isAdmin);
       document.getElementById('adminBtn').textContent = isAdmin ? '👋 退出管理' : '🔑 管理员';
+      // 更新上传表单的分类下拉
       const sel = document.querySelector('#uploadForm select[name="bookCategory"]');
       if (sel) {
         sel.innerHTML = '';
@@ -362,16 +329,14 @@
       }).join('');
     }
 
-    // 修复：读后感展开/收起
     function toggleReview(bookId) {
       const book = window.books.find(b => b.id === bookId);
       if (!book) return;
-      const el = document.getElementById('review-' + bookId);
-      if (!el) return;
+      const el = document.getElementById('review-'+bookId);
       const btn = el.parentNode.querySelector('.review-toggle');
       if (el.classList.contains('expanded')) {
         el.classList.remove('expanded');
-        el.textContent = (book.review || '').length > 60 ? (book.review || '').substring(0, 60) + '...' : (book.review || '');
+        el.textContent = (book.review||'').length > 60 ? (book.review||'').substring(0,60)+'...' : (book.review||'');
         if (btn) btn.textContent = '查看更多';
       } else {
         el.classList.add('expanded');
@@ -393,7 +358,9 @@
           <td><span class="badge ${book.status===0?'badge-pending':book.status===1?'badge-published':'badge-unpublished'}">${['待审核','已上架','已下架'][book.status]}</span></td>
           <td>
             <button onclick="openEditBookModal(${book.id})" class="btn btn-sm btn-primary">✏️ 编辑</button>
-            ${book.status===0?`<button onclick="updateBookStatus(${book.id},1)" class="btn btn-sm btn-success">✅ 通过</button><button onclick="updateBookStatus(${book.id},2)" class="btn btn-sm btn-warning">❌ 拒绝</button>`:''}
+            ${book.status===0?`
+              <button onclick="updateBookStatus(${book.id},1)" class="btn btn-sm btn-success">✅ 通过</button>
+              <button onclick="updateBookStatus(${book.id},2)" class="btn btn-sm btn-warning">❌ 拒绝</button>`:''}
             ${book.status===1?`<button onclick="updateBookStatus(${book.id},2)" class="btn btn-sm btn-warning">📴 下架</button>`:''}
             ${book.status===2?`<button onclick="updateBookStatus(${book.id},1)" class="btn btn-sm btn-success">📢 上架</button>`:''}
             <button onclick="deleteBook(${book.id})" class="btn btn-sm btn-danger">🗑 删除</button>
@@ -402,14 +369,24 @@
       `).join('');
     }
 
-    function updateBookStatus(id, status) {
+    // ========== 管理员操作 ==========
+    function updateBookStatus(id, newStatus) {
       const book = window.books.find(b => b.id === id);
-      if (book) { book.status = status; window.syncToCloud(); }
-    }
-    function deleteBook(id) {
-      if (confirm('确认删除？')) { window.books = window.books.filter(b => b.id !== id); window.syncToCloud(); }
+      if (!book) return;
+      book.status = newStatus;
+      saveToLocal();
+      renderAll(); // 立即刷新界面
     }
 
+    function deleteBook(id) {
+      if (confirm('确认删除？')) {
+        window.books = window.books.filter(b => b.id !== id);
+        saveToLocal();
+        renderAll();
+      }
+    }
+
+    // ========== 上传书籍 ==========
     document.getElementById('uploadForm').onsubmit = function(e) {
       e.preventDefault();
       const coverFile = this.bookCover.files[0];
@@ -429,13 +406,16 @@
           batch: this.bookBatch.value, status: 0,
           uploadDate: new Date().toISOString().slice(0, 10), pages
         });
-        window.syncToCloud();
-        $('#uploadModal').addClass('hidden'); this.reset();
+        saveToLocal();
+        renderAll();
+        $('#uploadModal').addClass('hidden');
+        this.reset();
         alert('✅ 分享成功！等待管理员审核。');
       };
       reader.readAsDataURL(coverFile);
     };
 
+    // ========== 编辑书籍 ==========
     function openEditBookModal(bookId) {
       const form = document.getElementById('editForm');
       form.reset();
@@ -488,7 +468,8 @@
           data.id = Date.now();
           window.books.push(data);
         }
-        window.syncToCloud();
+        saveToLocal();
+        renderAll();
         $('#editModal').addClass('hidden');
       };
       if (coverFile && coverFile.size > 0) {
@@ -498,6 +479,7 @@
       } else processBook(null);
     };
 
+    // ========== 分类管理 ==========
     function openCategoryModal() { renderCategoryManage(); $('#categoryModal').removeClass('hidden'); }
     function renderCategoryManage() {
       const container = document.getElementById('categoryListManage');
@@ -518,27 +500,32 @@
       if (!key || !name) { alert('请填写完整'); return; }
       if (window.categoryMap[key]) { alert('该标识已存在'); return; }
       window.categoryMap[key] = name;
-      window.syncToCloud();
+      saveToLocal();
       document.getElementById('newCatKey').value = '';
       document.getElementById('newCatName').value = '';
       renderCategoryManage();
+      renderAll();
     }
     function updateCategory(key) {
       const input = document.querySelector(`input[data-key="${key}"]`);
       if (input && input.value.trim()) {
         window.categoryMap[key] = input.value.trim();
-        window.syncToCloud();
+        saveToLocal();
         renderCategoryManage();
+        renderAll();
       }
     }
     function deleteCategory(key) {
       if (confirm(`删除分类 "${window.categoryMap[key]}"？该分类下的书籍将归为"技术类"。`)) {
         window.books.forEach(b => { if (b.category === key) b.category = 'tech'; });
         delete window.categoryMap[key];
-        window.syncToCloud();
+        saveToLocal();
+        renderAll();
+        renderCategoryManage();
       }
     }
 
+    // ========== 密码修改 ==========
     function openPasswordModal() { document.getElementById('passwordForm').reset(); $('#passwordModal').removeClass('hidden'); }
     document.getElementById('passwordForm').onsubmit = function(e) {
       e.preventDefault();
@@ -546,73 +533,48 @@
       if (this.newPassword.value !== this.confirmPassword.value) { alert('❌ 两次密码不一致'); return; }
       if (this.newPassword.value.length < 6) { alert('❌ 密码至少6位'); return; }
       window.adminPassword = this.newPassword.value;
-      window.syncToCloud();
+      saveToLocal();
       $('#passwordModal').addClass('hidden');
       alert('✅ 密码修改成功！');
     };
 
-    // 修复：阅读模态框彻底重建
+    // ========== 翻书阅读 ==========
     function openReadModal(bookId) {
       const book = window.books.find(b => b.id === bookId);
       if (!book) return;
       document.getElementById('readBookTitle').textContent = `📖 ${book.name}`;
-
-      // 销毁旧实例并移除整个flipbook
       try { $('#flipbook').turn('destroy'); } catch(e) {}
       const old = document.getElementById('flipbook');
       if (old) old.remove();
-
-      // 创建全新容器
       const wrapper = document.getElementById('bookWrapper');
-      const newFlipbook = document.createElement('div');
-      newFlipbook.id = 'flipbook';
-      newFlipbook.className = 'book-container';
-      wrapper.appendChild(newFlipbook);
+      const newFlip = document.createElement('div');
+      newFlip.id = 'flipbook';
+      newFlip.className = 'book-container';
+      wrapper.appendChild(newFlip);
 
-      // 封面页
       const cover = document.createElement('div');
       cover.className = 'book-page cover-page';
-      cover.innerHTML = `
-        <img src="${book.cover}" alt="${book.name}">
-        <h2>${book.name}</h2>
-        <p><strong>作者：</strong>${book.author}</p>
-        <p><strong>分享者：</strong>${book.uploader}</p>
-      `;
-      newFlipbook.appendChild(cover);
-
-      // 内容页
-      book.pages.forEach(page => {
+      cover.innerHTML = `<img src="${book.cover}" alt="${book.name}"><h2>${book.name}</h2><p><strong>作者：</strong>${book.author}</p><p><strong>分享者：</strong>${book.uploader}</p>`;
+      newFlip.appendChild(cover);
+      book.pages.forEach(p => {
         const div = document.createElement('div');
         div.className = 'book-page';
-        div.innerHTML = page;
-        newFlipbook.appendChild(div);
+        div.innerHTML = p;
+        newFlip.appendChild(div);
       });
-
-      // 初始化turn.js
       try {
-        $('#flipbook').turn({
-          width: 800,
-          height: 500,
-          display: 'double',
-          autoCenter: true,
-          when: {
-            turned: function(e, page) {
-              document.getElementById('pageIndicator').textContent = `${page} / ${$('#flipbook').turn('pages')}`;
-            }
-          }
+        $('#flipbook').turn({ width: 800, height: 500, display: 'double', autoCenter: true,
+          when: { turned: (e, page) => { document.getElementById('pageIndicator').textContent = `${page} / ${$('#flipbook').turn('pages')}`; }}
         });
         $('#flipbook').turn('page', 1);
         document.getElementById('pageIndicator').textContent = `1 / ${$('#flipbook').turn('pages')}`;
-        // 绑定翻页按钮
         document.getElementById('prevPageBtn').onclick = () => $('#flipbook').turn('previous');
         document.getElementById('nextPageBtn').onclick = () => $('#flipbook').turn('next');
       } catch(e) {
         document.getElementById('pageIndicator').textContent = `共 ${book.pages.length + 1} 页`;
       }
-
       $('#readModal').removeClass('hidden');
     }
-
     function closeReadModal() {
       try { $('#flipbook').turn('destroy'); } catch(e) {}
       const old = document.getElementById('flipbook');
@@ -620,6 +582,7 @@
       $('#readModal').addClass('hidden');
     }
 
+    // ========== 导出/导入 ==========
     function exportData() {
       const data = JSON.stringify({ books: window.books, categoryMap: window.categoryMap, adminPassword: window.adminPassword }, null, 2);
       const blob = new Blob([data], { type: 'application/json' });
@@ -640,7 +603,8 @@
               window.books = data.books || [];
               window.categoryMap = data.categoryMap || window.categoryMap;
               window.adminPassword = data.adminPassword || 'admin123';
-              window.syncToCloud();
+              saveToLocal();
+              renderAll();
               alert('✅ 导入成功！');
             }
           } catch (err) { alert('文件格式错误'); }
@@ -649,9 +613,9 @@
       };
       input.click();
     }
-
     function doSearch() { renderBooks(); }
 
+    // ========== 管理员登录 ==========
     document.getElementById('adminBtn').onclick = () => {
       if (isAdmin) { isAdmin = false; currentCategory = 'all'; renderAll(); }
       else {
@@ -665,15 +629,9 @@
       m.addEventListener('click', function(e) { if (e.target === this) $(this).addClass('hidden'); });
     });
 
-    (function() {
-      const lb = localStorage.getItem('lib_books');
-      const lc = localStorage.getItem('lib_categories');
-      const lp = localStorage.getItem('lib_adminPwd');
-      if (lb) window.books = JSON.parse(lb);
-      if (lc) window.categoryMap = JSON.parse(lc);
-      if (lp) window.adminPassword = lp;
-      renderAll();
-    })();
+    // ========== 启动 ==========
+    loadFromLocal();
+    renderAll();
   </script>
 </body>
 </html>
