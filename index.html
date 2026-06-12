@@ -7,92 +7,92 @@
   <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/turn.js/3/turn.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", "PingFang SC", sans-serif; }
-    body { background: #f5f7fa; min-height: 100vh; }
-    .hidden { display: none !important; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:"Microsoft Yahei","PingFang SC",sans-serif; }
+    body { background:#f5f7fa; min-height:100vh; }
+    .hidden { display:none!important; }
 
-    .navbar { background: white; box-shadow: 0 2px 12px rgba(0,0,0,0.08); position: sticky; top: 0; z-index: 100; }
-    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-    .logo { font-size: 22px; font-weight: bold; color: #1D2129; }
-    .sync-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-    .sync-online { background: #E8FFEA; color: #00B42A; }
+    .navbar { background:white; box-shadow:0 2px 12px rgba(0,0,0,0.08); position:sticky; top:0; z-index:100; }
+    .nav-inner { max-width:1200px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .logo { font-size:22px; font-weight:bold; color:#1D2129; }
+    .sync-badge { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:500; }
+    .sync-online { background:#E8FFEA; color:#00B42A; }
 
-    .main-layout { max-width: 1200px; margin: 0 auto; padding: 24px 20px; display: flex; gap: 24px; }
-    .sidebar { width: 180px; flex-shrink: 0; }
-    .sidebar-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 80px; }
-    .sidebar-title { font-weight: 600; color: #1D2129; margin-bottom: 16px; font-size: 16px; }
-    .cat-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
-    .cat-btn { width: 100%; text-align: left; border: none; background: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #4E5969; }
-    .cat-btn:hover { background: #F2F3F5; }
-    .cat-btn.active { background: #E8F3FF; color: #165DFF; font-weight: 600; }
+    .main-layout { max-width:1200px; margin:0 auto; padding:24px 20px; display:flex; gap:24px; }
+    .sidebar { width:180px; flex-shrink:0; }
+    .sidebar-card { background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06); position:sticky; top:80px; }
+    .sidebar-title { font-weight:600; color:#1D2129; margin-bottom:16px; font-size:16px; }
+    .cat-list { list-style:none; display:flex; flex-direction:column; gap:4px; }
+    .cat-btn { width:100%; text-align:left; border:none; background:none; padding:10px 12px; border-radius:8px; cursor:pointer; font-size:14px; color:#4E5969; }
+    .cat-btn:hover { background:#F2F3F5; }
+    .cat-btn.active { background:#E8F3FF; color:#165DFF; font-weight:600; }
 
-    .content-area { flex: 1; min-width: 0; }
-    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-    .section-title { font-size: 24px; font-weight: 600; color: #1D2129; }
+    .content-area { flex:1; min-width:0; }
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+    .section-title { font-size:24px; font-weight:600; color:#1D2129; }
 
-    .books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-    .book-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: all 0.3s; cursor: pointer; }
-    .book-card:hover { transform: translateY(-6px); box-shadow: 0 12px 24px rgba(0,0,0,0.12); }
-    .book-cover-img { width: 100%; height: 220px; object-fit: cover; border-bottom: 1px solid #F2F3F5; }
-    .book-details { padding: 16px; }
-    .book-name { font-size: 16px; font-weight: 600; color: #1D2129; margin-bottom: 4px; }
-    .book-meta { color: #4E5969; font-size: 13px; margin-bottom: 4px; }
-    .book-review { color: #4E5969; font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .book-review.expanded { display: block; -webkit-line-clamp: unset; overflow: visible; }
-    .review-toggle { color: #165DFF; font-size: 12px; cursor: pointer; border: none; background: none; margin-top: 4px; }
-    .review-toggle:hover { text-decoration: underline; }
+    .books-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:20px; }
+    .book-card { background:white; border-radius:12px; overflow:visible; box-shadow:0 2px 8px rgba(0,0,0,0.06); transition:all 0.3s; cursor:pointer; display:flex; flex-direction:column; }
+    .book-card:hover { transform:translateY(-6px); box-shadow:0 12px 24px rgba(0,0,0,0.12); }
+    .book-cover-img { width:100%; height:220px; object-fit:cover; border-bottom:1px solid #F2F3F5; flex-shrink:0; }
+    .book-details { padding:16px; flex:1; display:flex; flex-direction:column; overflow:visible; }
+    .book-name { font-size:16px; font-weight:600; color:#1D2129; margin-bottom:4px; }
+    .book-meta { color:#4E5969; font-size:13px; margin-bottom:4px; }
+    .book-review { color:#4E5969; font-size:13px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; word-wrap:break-word; }
+    .book-review.expanded { display:block; -webkit-line-clamp:unset; overflow:visible; }
+    .review-toggle { color:#165DFF; font-size:12px; cursor:pointer; border:none; background:none; margin-top:4px; align-self:flex-start; }
+    .review-toggle:hover { text-decoration:underline; }
 
-    .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-primary { background: #165DFF; color: white; } .btn-primary:hover { background: #0E42D2; }
-    .btn-success { background: #00B42A; color: white; } .btn-success:hover { background: #009E24; }
-    .btn-warning { background: #FF7D00; color: white; } .btn-warning:hover { background: #E67000; }
-    .btn-danger { background: #F53F3F; color: white; } .btn-danger:hover { background: #D93636; }
-    .btn-outline { background: white; border: 2px solid #165DFF; color: #165DFF; } .btn-outline:hover { background: #E8F3FF; }
-    .btn-default { background: #F2F3F5; color: #4E5969; } .btn-default:hover { background: #E5E6EB; }
-    .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
+    .btn { padding:10px 20px; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; border:none; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px; }
+    .btn-primary { background:#165DFF; color:white; } .btn-primary:hover { background:#0E42D2; }
+    .btn-success { background:#00B42A; color:white; } .btn-success:hover { background:#009E24; }
+    .btn-warning { background:#FF7D00; color:white; } .btn-warning:hover { background:#E67000; }
+    .btn-danger { background:#F53F3F; color:white; } .btn-danger:hover { background:#D93636; }
+    .btn-outline { background:white; border:2px solid #165DFF; color:#165DFF; } .btn-outline:hover { background:#E8F3FF; }
+    .btn-default { background:#F2F3F5; color:#4E5969; } .btn-default:hover { background:#E5E6EB; }
+    .btn-sm { padding:4px 10px; font-size:12px; border-radius:6px; }
 
-    .badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
-    .badge-pending { background: #FFF7E6; color: #FF7D00; }
-    .badge-published { background: #E8FFEA; color: #00B42A; }
-    .badge-unpublished { background: #F2F3F5; color: #86909C; }
+    .badge { padding:3px 10px; border-radius:12px; font-size:11px; font-weight:500; }
+    .badge-pending { background:#FFF7E6; color:#FF7D00; }
+    .badge-published { background:#E8FFEA; color:#00B42A; }
+    .badge-unpublished { background:#F2F3F5; color:#86909C; }
 
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 999; display: flex; align-items: center; justify-content: center; }
-    .modal-box { background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto; }
-    .modal-lg { max-width: 900px; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .modal-close { background: none; border: none; font-size: 28px; cursor: pointer; color: #86909C; }
+    .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:999; display:flex; align-items:center; justify-content:center; }
+    .modal-box { background:white; border-radius:16px; padding:24px; width:90%; max-width:700px; max-height:85vh; overflow-y:auto; }
+    .modal-lg { max-width:900px; }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .modal-close { background:none; border:none; font-size:28px; cursor:pointer; color:#86909C; }
 
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; color: #4E5969; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 2px solid #E5E6EB; border-radius: 8px; font-size: 14px; }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #165DFF; }
-    .form-row { display: flex; gap: 12px; }
-    .form-row .form-group { flex: 1; }
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; color:#4E5969; margin-bottom:6px; font-size:14px; font-weight:500; }
+    .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 12px; border:2px solid #E5E6EB; border-radius:8px; font-size:14px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:#165DFF; }
+    .form-row { display:flex; gap:12px; }
+    .form-row .form-group { flex:1; }
 
-    .book-container { width: 800px; height: 500px; margin: 0 auto; }
-    .book-page { width: 400px; height: 500px; background: #fff; box-shadow: inset 0 0 20px rgba(0,0,0,0.04); }
-    .page-content { padding: 40px; height: 100%; overflow-y: auto; }
-    .page-content h2 { margin-bottom: 20px; color: #1D2129; }
-    .page-content p { line-height: 2; margin-bottom: 1em; text-indent: 2em; color: #4E5969; }
-    .cover-page { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 400px; height: 500px; }
-    .cover-page img { width: 200px; height: 260px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); object-fit: cover; }
-    .cover-page h2 { font-size: 24px; margin-bottom: 8px; }
-    .cover-page p { font-size: 14px; margin: 4px 0; opacity: 0.95; }
+    .book-container { width:800px; height:500px; margin:0 auto; }
+    .book-page { width:400px; height:500px; background:#fff; box-shadow:inset 0 0 20px rgba(0,0,0,0.04); }
+    .page-content { padding:40px; height:100%; overflow-y:auto; }
+    .page-content h2 { margin-bottom:20px; color:#1D2129; }
+    .page-content p { line-height:2; margin-bottom:1em; text-indent:2em; color:#4E5969; }
+    .cover-page { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:linear-gradient(135deg, #667eea, #764ba2); color:white; width:400px; height:500px; }
+    .cover-page img { width:200px; height:260px; border-radius:12px; margin-bottom:20px; box-shadow:0 8px 24px rgba(0,0,0,0.3); object-fit:cover; }
+    .cover-page h2 { font-size:24px; margin-bottom:8px; }
+    .cover-page p { font-size:14px; margin:4px 0; opacity:0.95; }
 
-    .search-box { border: 2px solid #E5E6EB; border-radius: 8px; padding: 10px 14px; width: 200px; font-size: 14px; }
-    .search-box:focus { outline: none; border-color: #165DFF; }
+    .search-box { border:2px solid #E5E6EB; border-radius:8px; padding:10px 14px; width:200px; font-size:14px; }
+    .search-box:focus { outline:none; border-color:#165DFF; }
 
-    .admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    .admin-table th { padding: 12px; text-align: left; color: #4E5969; background: #F7F8FA; border-bottom: 2px solid #E5E6EB; }
-    .admin-table td { padding: 12px; border-bottom: 1px solid #F2F3F5; }
+    .admin-table { width:100%; border-collapse:collapse; font-size:14px; }
+    .admin-table th { padding:12px; text-align:left; color:#4E5969; background:#F7F8FA; border-bottom:2px solid #E5E6EB; }
+    .admin-table td { padding:12px; border-bottom:1px solid #F2F3F5; }
 
-    @media (max-width: 768px) {
-      .main-layout { flex-direction: column; }
-      .sidebar { width: 100%; }
-      .sidebar-card { position: static; }
-      .book-container { width: 100%; height: 300px; }
-      .book-page { width: 50%; height: 300px; }
-      .form-row { flex-direction: column; }
+    @media (max-width:768px) {
+      .main-layout { flex-direction:column; }
+      .sidebar { width:100%; }
+      .sidebar-card { position:static; }
+      .book-container { width:100%; height:300px; }
+      .book-page { width:50%; height:300px; }
+      .form-row { flex-direction:column; }
     }
   </style>
 </head>
@@ -100,7 +100,7 @@
   <nav class="navbar">
     <div class="nav-inner">
       <div class="logo">📚 企业共享图书馆</div>
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         <span id="syncBadge" class="sync-badge sync-online">💾 本地模式</span>
         <input id="searchInput" class="search-box" type="text" placeholder="🔍 搜索..." onkeypress="if(event.key==='Enter')doSearch()">
         <button onclick="$('#uploadModal').removeClass('hidden')" class="btn btn-outline">📤 分享书籍</button>
@@ -147,7 +147,7 @@
     </main>
   </div>
 
-  <!-- 上传书籍模态框 -->
+  <!-- 模态框保持原样 -->
   <div id="uploadModal" class="modal-overlay hidden">
     <div class="modal-box">
       <div class="modal-header"><h3>📤 分享我的书籍</h3><button class="modal-close" onclick="$('#uploadModal').addClass('hidden')">&times;</button></div>
@@ -169,7 +169,6 @@
     </div>
   </div>
 
-  <!-- 阅读模态框 -->
   <div id="readModal" class="modal-overlay hidden">
     <div class="modal-box modal-lg">
       <div class="modal-header"><h3 id="readBookTitle">📖 阅读中...</h3><button class="modal-close" onclick="closeReadModal()">&times;</button></div>
@@ -182,7 +181,6 @@
     </div>
   </div>
 
-  <!-- 编辑书籍模态框 -->
   <div id="editModal" class="modal-overlay hidden">
     <div class="modal-box">
       <div class="modal-header"><h3 id="editModalTitle">编辑书籍</h3><button class="modal-close" onclick="$('#editModal').addClass('hidden')">&times;</button></div>
@@ -211,7 +209,6 @@
     </div>
   </div>
 
-  <!-- 分类管理模态框 -->
   <div id="categoryModal" class="modal-overlay hidden">
     <div class="modal-box">
       <div class="modal-header"><h3>🏷️ 分类管理</h3><button class="modal-close" onclick="$('#categoryModal').addClass('hidden')">&times;</button></div>
@@ -224,7 +221,6 @@
     </div>
   </div>
 
-  <!-- 修改密码模态框 -->
   <div id="passwordModal" class="modal-overlay hidden">
     <div class="modal-box" style="max-width:400px;">
       <div class="modal-header"><h3>🔒 修改管理员密码</h3><button class="modal-close" onclick="$('#passwordModal').addClass('hidden')">&times;</button></div>
@@ -239,12 +235,11 @@
 
   <script>
     window.books = [];
-    window.categoryMap = { all: '所有书籍', tech: '技术类', manage: '管理类', literature: '文学类', psychology: '心理学类', career: '职场类', pending: '待审核' };
+    window.categoryMap = { all:'所有书籍', tech:'技术类', manage:'管理类', literature:'文学类', psychology:'心理学类', career:'职场类', pending:'待审核' };
     window.adminPassword = 'admin123';
     let isAdmin = false;
     let currentCategory = 'all';
 
-    // 本地存储
     function saveToLocal() {
       localStorage.setItem('lib_books', JSON.stringify(window.books));
       localStorage.setItem('lib_categories', JSON.stringify(window.categoryMap));
@@ -259,7 +254,6 @@
       if (p) window.adminPassword = p;
     }
 
-    // 渲染
     function renderAll() {
       renderCategoryNav();
       renderBooks();
@@ -279,16 +273,13 @@
     function renderCategoryNav() {
       const nav = document.getElementById('categoryNav');
       const cats = [
-        { key: 'all', label: '📖 所有书籍' },
-        { key: 'tech', label: '💻 技术类' },
-        { key: 'manage', label: '📊 管理类' },
-        { key: 'literature', label: '📜 文学类' },
-        { key: 'psychology', label: '🧠 心理学' },
-        { key: 'career', label: '💼 职场类' }
+        { key:'all', label:'📖 所有书籍' }, { key:'tech', label:'💻 技术类' },
+        { key:'manage', label:'📊 管理类' }, { key:'literature', label:'📜 文学类' },
+        { key:'psychology', label:'🧠 心理学' }, { key:'career', label:'💼 职场类' }
       ];
-      if (isAdmin) cats.push({ key: 'pending', label: '⏳ 待审核' });
+      if (isAdmin) cats.push({ key:'pending', label:'⏳ 待审核' });
       for (let k in window.categoryMap) {
-        if (!cats.find(c => c.key === k) && k !== 'all' && k !== 'pending') cats.push({ key: k, label: window.categoryMap[k] });
+        if (!cats.find(c => c.key === k) && k !== 'all' && k !== 'pending') cats.push({ key:k, label:window.categoryMap[k] });
       }
       nav.innerHTML = cats.map(c => `<li><button class="cat-btn ${currentCategory === c.key ? 'active' : ''}" data-cat="${c.key}">${c.label}</button></li>`).join('');
       nav.querySelectorAll('.cat-btn').forEach(btn => {
@@ -316,8 +307,9 @@
         return;
       }
       grid.innerHTML = filtered.map(book => {
-        const shortReview = (book.review || '').length > 60 ? (book.review||'').substring(0,60)+'...' : (book.review||'');
-        const hasMore = (book.review || '').length > 60;
+        const fullReview = book.review || '';
+        const shortReview = fullReview.length > 60 ? fullReview.substring(0,60)+'...' : fullReview;
+        const hasMore = fullReview.length > 60;
         return `<div class="book-card" onclick="openReadModal(${book.id})">
           <img class="book-cover-img" src="${book.cover}" alt="${book.name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22220%22><rect fill=%22%23E5E6EB%22 width=%22300%22 height=%22220%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%2386909C%22 font-size=%2248%22>📖</text></svg>'">
           <div class="book-details">
@@ -332,7 +324,6 @@
       }).join('');
     }
 
-    // 修复：读后感展开
     function toggleReview(bookId) {
       const book = window.books.find(b => b.id === bookId);
       if (!book) return;
@@ -341,7 +332,7 @@
       const btn = el.parentNode.querySelector('.review-toggle');
       if (el.classList.contains('expanded')) {
         el.classList.remove('expanded');
-        el.textContent = (book.review||'').length > 60 ? (book.review||'').substring(0,60)+'...' : (book.review||'');
+        el.textContent = book.review.length > 60 ? book.review.substring(0,60)+'...' : book.review;
         if (btn) btn.textContent = '查看更多';
       } else {
         el.classList.add('expanded');
@@ -372,7 +363,6 @@
       `).join('');
     }
 
-    // 管理操作（立即生效）
     function updateBookStatus(id, newStatus) {
       const book = window.books.find(b => b.id === id);
       if (!book) return;
@@ -380,7 +370,6 @@
       saveToLocal();
       renderAll();
     }
-
     function deleteBook(id) {
       if (confirm('确认删除？')) {
         window.books = window.books.filter(b => b.id !== id);
@@ -389,7 +378,6 @@
       }
     }
 
-    // 上传
     document.getElementById('uploadForm').onsubmit = function(e) {
       e.preventDefault();
       const coverFile = this.bookCover.files[0];
@@ -407,7 +395,7 @@
           cover: ev.target.result, uploader: this.bookUploader.value,
           review: this.bookReview.value, category: this.bookCategory.value,
           batch: this.bookBatch.value, status: 0,
-          uploadDate: new Date().toISOString().slice(0, 10), pages
+          uploadDate: new Date().toISOString().slice(0,10), pages
         });
         saveToLocal();
         renderAll();
@@ -418,7 +406,6 @@
       reader.readAsDataURL(coverFile);
     };
 
-    // 编辑
     function openEditBookModal(bookId) {
       const form = document.getElementById('editForm');
       form.reset();
@@ -440,7 +427,7 @@
       } else {
         document.getElementById('editModalTitle').textContent = '➕ 添加新书籍';
         form.bookId.value = ''; form.bookStatus.value = '1';
-        form.bookDate.value = new Date().toISOString().slice(0, 10);
+        form.bookDate.value = new Date().toISOString().slice(0,10);
       }
       $('#editModal').removeClass('hidden');
     }
@@ -482,7 +469,6 @@
       } else processBook(null);
     };
 
-    // 分类管理
     function openCategoryModal() { renderCategoryManage(); $('#categoryModal').removeClass('hidden'); }
     function renderCategoryManage() {
       const container = document.getElementById('categoryListManage');
@@ -528,7 +514,6 @@
       }
     }
 
-    // 密码
     function openPasswordModal() { document.getElementById('passwordForm').reset(); $('#passwordModal').removeClass('hidden'); }
     document.getElementById('passwordForm').onsubmit = function(e) {
       e.preventDefault();
@@ -541,7 +526,6 @@
       alert('✅ 密码修改成功！');
     };
 
-    // 阅读翻页（修复）
     function openReadModal(bookId) {
       const book = window.books.find(b => b.id === bookId);
       if (!book) return;
@@ -566,7 +550,7 @@
         newFlip.appendChild(div);
       });
       try {
-        $('#flipbook').turn({ width: 800, height: 500, display: 'double', autoCenter: true,
+        $('#flipbook').turn({ width:800, height:500, display:'double', autoCenter:true,
           when: { turned: (e, page) => { document.getElementById('pageIndicator').textContent = `${page} / ${$('#flipbook').turn('pages')}`; }}
         });
         $('#flipbook').turn('page', 1);
@@ -585,10 +569,9 @@
       $('#readModal').addClass('hidden');
     }
 
-    // 导出导入
     function exportData() {
       const data = JSON.stringify({ books: window.books, categoryMap: window.categoryMap, adminPassword: window.adminPassword }, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
+      const blob = new Blob([data], { type:'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = `图书馆备份_${new Date().toISOString().slice(0,10)}.json`;
@@ -618,7 +601,6 @@
     }
     function doSearch() { renderBooks(); }
 
-    // 管理员登录
     document.getElementById('adminBtn').onclick = () => {
       if (isAdmin) { isAdmin = false; currentCategory = 'all'; renderAll(); }
       else {
@@ -632,7 +614,6 @@
       m.addEventListener('click', function(e) { if (e.target === this) $(this).addClass('hidden'); });
     });
 
-    // 启动
     loadFromLocal();
     renderAll();
   </script>
