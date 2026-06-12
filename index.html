@@ -38,6 +38,7 @@
     .book-name { font-size: 16px; font-weight: 600; color: #1D2129; margin-bottom: 4px; }
     .book-meta { color: #4E5969; font-size: 13px; margin-bottom: 4px; }
     .book-review { color: #4E5969; font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .book-review.expanded { display: block; -webkit-line-clamp: unset; overflow: visible; }
     .review-toggle { color: #165DFF; font-size: 12px; cursor: pointer; border: none; background: none; margin-top: 4px; }
     .review-toggle:hover { text-decoration: underline; }
 
@@ -146,7 +147,7 @@
     </main>
   </div>
 
-  <!-- 模态框：上传、阅读、编辑、分类、密码（保持与之前相同） -->
+  <!-- 上传书籍模态框 -->
   <div id="uploadModal" class="modal-overlay hidden">
     <div class="modal-box">
       <div class="modal-header"><h3>📤 分享我的书籍</h3><button class="modal-close" onclick="$('#uploadModal').addClass('hidden')">&times;</button></div>
@@ -168,6 +169,7 @@
     </div>
   </div>
 
+  <!-- 阅读模态框 -->
   <div id="readModal" class="modal-overlay hidden">
     <div class="modal-box modal-lg">
       <div class="modal-header"><h3 id="readBookTitle">📖 阅读中...</h3><button class="modal-close" onclick="closeReadModal()">&times;</button></div>
@@ -180,6 +182,7 @@
     </div>
   </div>
 
+  <!-- 编辑书籍模态框 -->
   <div id="editModal" class="modal-overlay hidden">
     <div class="modal-box">
       <div class="modal-header"><h3 id="editModalTitle">编辑书籍</h3><button class="modal-close" onclick="$('#editModal').addClass('hidden')">&times;</button></div>
@@ -208,6 +211,7 @@
     </div>
   </div>
 
+  <!-- 分类管理模态框 -->
   <div id="categoryModal" class="modal-overlay hidden">
     <div class="modal-box">
       <div class="modal-header"><h3>🏷️ 分类管理</h3><button class="modal-close" onclick="$('#categoryModal').addClass('hidden')">&times;</button></div>
@@ -220,6 +224,7 @@
     </div>
   </div>
 
+  <!-- 修改密码模态框 -->
   <div id="passwordModal" class="modal-overlay hidden">
     <div class="modal-box" style="max-width:400px;">
       <div class="modal-header"><h3>🔒 修改管理员密码</h3><button class="modal-close" onclick="$('#passwordModal').addClass('hidden')">&times;</button></div>
@@ -233,14 +238,13 @@
   </div>
 
   <script>
-    // ========== 全局数据 ==========
     window.books = [];
     window.categoryMap = { all: '所有书籍', tech: '技术类', manage: '管理类', literature: '文学类', psychology: '心理学类', career: '职场类', pending: '待审核' };
     window.adminPassword = 'admin123';
     let isAdmin = false;
     let currentCategory = 'all';
 
-    // ========== 本地存储 ==========
+    // 本地存储
     function saveToLocal() {
       localStorage.setItem('lib_books', JSON.stringify(window.books));
       localStorage.setItem('lib_categories', JSON.stringify(window.categoryMap));
@@ -255,7 +259,7 @@
       if (p) window.adminPassword = p;
     }
 
-    // ========== 渲染函数 ==========
+    // 渲染
     function renderAll() {
       renderCategoryNav();
       renderBooks();
@@ -263,7 +267,6 @@
       document.getElementById('userView').classList.toggle('hidden', isAdmin);
       document.getElementById('adminView').classList.toggle('hidden', !isAdmin);
       document.getElementById('adminBtn').textContent = isAdmin ? '👋 退出管理' : '🔑 管理员';
-      // 更新上传表单的分类下拉
       const sel = document.querySelector('#uploadForm select[name="bookCategory"]');
       if (sel) {
         sel.innerHTML = '';
@@ -329,10 +332,12 @@
       }).join('');
     }
 
+    // 修复：读后感展开
     function toggleReview(bookId) {
       const book = window.books.find(b => b.id === bookId);
       if (!book) return;
-      const el = document.getElementById('review-'+bookId);
+      const el = document.getElementById('review-' + bookId);
+      if (!el) return;
       const btn = el.parentNode.querySelector('.review-toggle');
       if (el.classList.contains('expanded')) {
         el.classList.remove('expanded');
@@ -358,9 +363,7 @@
           <td><span class="badge ${book.status===0?'badge-pending':book.status===1?'badge-published':'badge-unpublished'}">${['待审核','已上架','已下架'][book.status]}</span></td>
           <td>
             <button onclick="openEditBookModal(${book.id})" class="btn btn-sm btn-primary">✏️ 编辑</button>
-            ${book.status===0?`
-              <button onclick="updateBookStatus(${book.id},1)" class="btn btn-sm btn-success">✅ 通过</button>
-              <button onclick="updateBookStatus(${book.id},2)" class="btn btn-sm btn-warning">❌ 拒绝</button>`:''}
+            ${book.status===0?`<button onclick="updateBookStatus(${book.id},1)" class="btn btn-sm btn-success">✅ 通过</button><button onclick="updateBookStatus(${book.id},2)" class="btn btn-sm btn-warning">❌ 拒绝</button>`:''}
             ${book.status===1?`<button onclick="updateBookStatus(${book.id},2)" class="btn btn-sm btn-warning">📴 下架</button>`:''}
             ${book.status===2?`<button onclick="updateBookStatus(${book.id},1)" class="btn btn-sm btn-success">📢 上架</button>`:''}
             <button onclick="deleteBook(${book.id})" class="btn btn-sm btn-danger">🗑 删除</button>
@@ -369,13 +372,13 @@
       `).join('');
     }
 
-    // ========== 管理员操作 ==========
+    // 管理操作（立即生效）
     function updateBookStatus(id, newStatus) {
       const book = window.books.find(b => b.id === id);
       if (!book) return;
       book.status = newStatus;
       saveToLocal();
-      renderAll(); // 立即刷新界面
+      renderAll();
     }
 
     function deleteBook(id) {
@@ -386,7 +389,7 @@
       }
     }
 
-    // ========== 上传书籍 ==========
+    // 上传
     document.getElementById('uploadForm').onsubmit = function(e) {
       e.preventDefault();
       const coverFile = this.bookCover.files[0];
@@ -415,7 +418,7 @@
       reader.readAsDataURL(coverFile);
     };
 
-    // ========== 编辑书籍 ==========
+    // 编辑
     function openEditBookModal(bookId) {
       const form = document.getElementById('editForm');
       form.reset();
@@ -479,7 +482,7 @@
       } else processBook(null);
     };
 
-    // ========== 分类管理 ==========
+    // 分类管理
     function openCategoryModal() { renderCategoryManage(); $('#categoryModal').removeClass('hidden'); }
     function renderCategoryManage() {
       const container = document.getElementById('categoryListManage');
@@ -525,7 +528,7 @@
       }
     }
 
-    // ========== 密码修改 ==========
+    // 密码
     function openPasswordModal() { document.getElementById('passwordForm').reset(); $('#passwordModal').removeClass('hidden'); }
     document.getElementById('passwordForm').onsubmit = function(e) {
       e.preventDefault();
@@ -538,7 +541,7 @@
       alert('✅ 密码修改成功！');
     };
 
-    // ========== 翻书阅读 ==========
+    // 阅读翻页（修复）
     function openReadModal(bookId) {
       const book = window.books.find(b => b.id === bookId);
       if (!book) return;
@@ -582,7 +585,7 @@
       $('#readModal').addClass('hidden');
     }
 
-    // ========== 导出/导入 ==========
+    // 导出导入
     function exportData() {
       const data = JSON.stringify({ books: window.books, categoryMap: window.categoryMap, adminPassword: window.adminPassword }, null, 2);
       const blob = new Blob([data], { type: 'application/json' });
@@ -615,7 +618,7 @@
     }
     function doSearch() { renderBooks(); }
 
-    // ========== 管理员登录 ==========
+    // 管理员登录
     document.getElementById('adminBtn').onclick = () => {
       if (isAdmin) { isAdmin = false; currentCategory = 'all'; renderAll(); }
       else {
@@ -629,7 +632,7 @@
       m.addEventListener('click', function(e) { if (e.target === this) $(this).addClass('hidden'); });
     });
 
-    // ========== 启动 ==========
+    // 启动
     loadFromLocal();
     renderAll();
   </script>
